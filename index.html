@@ -95,7 +95,7 @@
         >
           <el-table-column label="HQ" width="50px">
             <template slot-scope="scope">
-              <span style="margin-left: 10px"
+              <span
                 >{{ scope.row.hq ? "√" : "" }}</span
               >
             </template>
@@ -104,26 +104,26 @@
             prop="pricePerUnit"
             label="单价"
             align="center"
-            min-width="120px"
+            width="120px"
           >
             <template slot-scope="scope">
-              <span style="margin-left: 10px"
+              <span
                 >{{ scope.row.pricePerUnit ? fmtCoin(scope.row.pricePerUnit) :
                 "" }}</span
               >
             </template>
           </el-table-column>
-          <el-table-column prop="timestamp" label="时间" align="center">
+          <el-table-column prop="timestamp" label="购买时间" align="center">
             <template slot-scope="scope">
-              <span style="margin-left: 10px"
-                >{{ scope.row.timestamp ? fmtTime(scope.row.timestamp) : ""
+              <span
+                >{{ scope.row.timestamp ? fmtTime(scope.row.timestamp,`yyyy-MM-dd\r\nhh:mm:ss`) : ""
                 }}</span
               >
             </template>
           </el-table-column>
           <el-table-column prop="worldName" label="区服" align="center">
             <template slot-scope="scope">
-              <span style="margin-left: 10px"
+              <span
                 >{{ scope.row.worldName ? dcs[scope.row.worldName] : dcs[dc]
                 }}</span
               >

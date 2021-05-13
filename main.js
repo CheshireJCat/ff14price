@@ -113,10 +113,8 @@ function init() {
       fmtCoin(value) {
         return value.toLocaleString("en-US");
       },
-      fmtTime(value, isSeconds = true) {
+      fmtTime(value, isSeconds = true, format = "yyyy-MM-dd hh:mm:ss") {
         let time = new Date(isSeconds ? value * 1000 : value);
-        let format = "MM-dd hh:mm:ss";
-        // let format = "yyyy-MM-dd hh:mm:ss";
         var o = {
           "M+": time.getMonth() + 1, //month
           "d+": time.getDate(), //day
