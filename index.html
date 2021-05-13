@@ -1,138 +1,95 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FF14价格收藏</title>
-    <link
-      href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/theme-chalk/index.min.css"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="main.css" />
-  </head>
-  <body>
-    <el-container class="app" id="app" style="display: none">
-      <el-header>
-        <el-menu
-          :default-active="activeIndex"
-          mode="horizontal"
-          @select="handleChangeTab"
-          background-color="#545c64"
-          text-color="#fff"
-          active-text-color="#ffd04b"
-        >
-          <el-menu-item index="1">价格查询</el-menu-item>
-          <el-menu-item index="2" disabled>收藏夹</el-menu-item>
-        </el-menu>
-      </el-header>
-      <el-main v-if="activeIndex == 1">
-        <!-- 搜索物品 -->
-        <el-autocomplete
-          class="search-input"
-          v-model="searchItemName"
-          :fetch-suggestions="searchItem"
-          placeholder="请输入物品名称"
-        >
-          <!-- 选择区服 -->
-          <el-select
-            slot="prepend"
-            v-model="dc"
-            placeholder="请选择区服"
-            style="width: 110px"
-            @change="handleDcChange"
-          >
-            <el-option
-              v-for="(value,name) in dcs"
-              :key="name"
-              :label="value"
-              :value="name"
-              :class="['LuXingNiao','MaoXiaoPang','MoGuLi'].includes(name) ? 'dcm': ''"
-            >
-            </el-option> </el-select
-          ><!-- 选择区服 end -->
-          <i class="el-icon-search el-input__icon" slot="suffix"> </i>
-          <template slot-scope="{ item }">
-            <div class="search-res-item" v-on:click="searchPrice(item)">
-              <el-image
-                class="search-res-image"
-                style="height: 100%"
-                :src="host + item.Icon"
-              ></el-image
-              ><span class="search-res-info"> {{ item.Name }} </span>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF14价格收藏</title>
+  <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/theme-chalk/index.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="main.css" />
+</head>
+
+<body>
+  <el-container class="app" id="app" style="display: none">
+
+    <el-header>
+      <!-- 选择区服 -->
+      <el-select v-model="dc" placeholder="请选择区服" style="width: 100%;text-align: center;" @change="handleDcChange">
+        <el-option v-for="(value,key) in dcs" :key="key" :label="value" :value="key"
+          :class="['LuXingNiao','MaoXiaoPang','MoGuLi'].includes(key) ? 'dcm': ''">
+        </el-option>
+      </el-select><!-- 选择区服 end -->
+      <el-tabs v-model="activeIndex" @tab-click="handleTabChange">
+        <!-- 价格查询 -->
+        <el-tab-pane label="价格查询" name="1">
+          <el-main>
+            <!-- 搜索物品 -->
+            <el-autocomplete class="search-input" ref="searchInput" v-model="searchItemName"
+              :fetch-suggestions="searchItem" placeholder="请输入物品名称">
+              <i class="el-icon-search el-input__icon" slot="suffix"> </i>
+              <template slot-scope="{ item }">
+                <div class="search-res-item" v-on:click="searchPrice(item)">
+                  <el-image class="search-res-image" style="height: 100%" :src="host + item.Icon"></el-image><span
+                    class="search-res-info"> {{ item.Name }} </span>
+                </div>
+              </template>
+            </el-autocomplete>
+            <!-- tags -->
+            <el-main>
+              <el-tag class="tag" v-for="(item, index) in tags" :key="index" @click="searchTag(item)">{{item}}</el-tag>
+            </el-main>
+            <!-- 价格查询结果 -->
+            <div class="search-res-item" style="justify-content: flex-start; margin: 20px 0" v-if="searchPriceItem.id">
+              <el-image :src="host + searchPriceItem.icon" style="vertical-align: middle">
+              </el-image>
+              <a :href="host + searchPriceItem.url">
+                <span class="search-res-info"> {{ searchPriceItem.name }} </span>
+              </a>
+              <span class="search-res-star" title="放入收藏夹" v-on:click.stop="collectItem(searchPriceItem.id)"><i
+                  :class="favIds.includes(searchPriceItem.id) ? 'el-icon-star-on': 'el-icon-star-off'"></i></span>
             </div>
-          </template>
-        </el-autocomplete>
-        <!-- 价格查询结果 -->
-        <div
-          class="search-res-item"
-          style="justify-content: flex-start; margin: 20px 0"
-          v-if="searchPriceItem"
-        >
-          <el-image
-            :src="host + searchPriceItem.icon"
-            style="vertical-align: middle"
-          >
-          </el-image>
-          <a :href="host + searchPriceItem.url">
-            <span class="search-res-info"> {{ searchPriceItem.name }} </span>
-          </a>
-          <span
-            class="search-res-star"
-            title="放入收藏夹"
-            v-on:click.stop="collectItem(searchPriceItem.id)"
-            ><i
-              :class="favIds.includes(searchPriceItem.id) ? 'el-icon-star-on': 'el-icon-star-off'"
-            ></i
-          ></span>
-        </div>
-        <el-table
-          v-if="searchPriceItem && searchPriceItem.id"
-          :data="searchPriceRes"
-          stripe
-          style="width: 100%"
-          v-loading="loading_searchPrice"
-        >
-          <el-table-column label="HQ" width="50">
-            <template slot-scope="scope">
-              <span
-                >{{ scope.row.hq ? "√" : "" }}</span
-              >
+            <!-- 价格统计 -->
+            <el-row :gutter="20">
+              <price-show :data="searchPriceRes.all" title="ALL"></price-show>
+              <price-show :data="searchPriceRes.nq" title="NQ"></price-show>
+              <price-show :data="searchPriceRes.hq" title="HQ"></price-show>
+            </el-row>
+            <!-- 价格列表 -->
+            <template v-loading="loading_searchPrice" v-if="searchPriceItem && searchPriceItem.id">
+              <el-row :gutter="20">
+                <el-col :xs="{span:24,offset:0}" :md="{span:12}">
+                  <div class="grid-content bg-purple">
+                    <el-main>购买记录</el-main>
+                    <price-table :data="searchPriceRes.history" time-text="购买时间" name-text="玩家名" :dc="dc"></price-table>
+                  </div>
+                </el-col>
+                <el-col :xs="{span:24,offset:0}" :md="{span:12}">
+                  <div class="grid-content bg-purple">
+                    <el-main>价格</el-main>
+                    <price-table :data="searchPriceRes.listings" time-text="上报时间" name-text="雇员名" :dc="dc">
+                    </price-table>
+                  </div>
+                </el-col>
+              </el-row>
             </template>
-          </el-table-column>
-          <el-table-column
-            prop="pricePerUnit"
-            label="单价"
-            align="center"
-          >
-            <template slot-scope="scope">
-              <span
-                >{{ scope.row.pricePerUnit ? fmtCoin(scope.row.pricePerUnit) :
-                "" }}</span
-              >
-            </template>
-          </el-table-column>
-          <el-table-column prop="timestamp" label="购买时间" align="center" width="120">
-            <template slot-scope="scope">
-              <span
-                >{{ scope.row.timestamp ? fmtTime(scope.row.timestamp,true, `MM-dd hh:mm:ss`) : ""
-                }}</span
-              >
-            </template>
-          </el-table-column>
-          <el-table-column prop="worldName" label="区服" align="center"  width="120">
-            <template slot-scope="scope">
-              <span
-                >{{ scope.row.worldName ? dcs[scope.row.worldName] : dcs[dc]
-                }}</span
-              >
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-main>
-    </el-container>
-    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
-    <script src="main.js"></script>
-  </body>
+            <!-- 价格列表 end -->
+          </el-main>
+        </el-tab-pane>
+        <!-- 价格查询 end -->
+        <!-- <el-tab-pane label="收藏夹" name="2" :lazy="true">收藏夹</el-tab-pane> -->
+        <el-tab-pane label="第四期重建" name="rebuild4" :lazy="true">
+          <build4 :dc="dc">
+            
+          </build4>
+        </el-tab-pane>
+      </el-tabs>
+    </el-header>
+
+  </el-container>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
+  <script src="main.js"></script>
+</body>
+
 </html>
