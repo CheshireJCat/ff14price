@@ -1,14 +1,14 @@
 body {
   margin: 0;
   background-color: rgb(84, 92, 100);
+  color: #fefefe;
 }
 a,
 a:visited {
-  color: #198fee;
+  color: #fff;
   text-decoration: none;
 }
 .app {
-  max-width: 1000px;
   margin: 0 auto;
 }
 .search-input {
@@ -32,6 +32,27 @@ a:visited {
 }
 .dcm {
   background-color: #eee;
+}
+
+.tag{
+  margin-right: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.priceRes{
+  width: 50%;
+}
+
+.el-tabs__item{
+  color: #fff;
+}
+
+.el-tabs__item.is-active,.el-tabs__item:hover,.el-tabs__active-bar{
+  color: #ffd04b;
+}
+.el-tabs__active-bar{
+  background-color: #ffd04b;
 }
 
 @media (max-width:768px){
