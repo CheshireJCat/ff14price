@@ -35,6 +35,7 @@ const price_default = {
   currentAverage: 0,
   max: 0,
   min: 0,
+  worldName: "",
 };
 
 const searchPriceRes_default = {
@@ -53,7 +54,7 @@ Vue.component("price-table", {
     fmtCoin,
   },
   template: `
-    <el-table :data="data" stripe style="width: 100%">
+    <el-table :data="data" style="width: 100%">
       <el-table-column label="HQ" width="30px">
         <template slot-scope="scope">
           <span>{{ scope.row.hq ? "√" : "" }}</span>
@@ -86,26 +87,30 @@ Vue.component("price-table", {
 });
 // 各种价格展示
 Vue.component("price-show", {
-  props: ["data", "title"],
+  props: ["data", "title", "dc"],
   computed: {
     maxPrice() {
-      return Math.max(...Object.values(this.data));
+      return Math.max(
+        ...Object.values(this.data).filter((item) => !isNaN(item))
+      );
     },
   },
   methods: {
     calP(value) {
-      return ((value * 100) / this.maxPrice).toFixed(2);
+      return ((parseInt(value) * 100) / this.maxPrice).toFixed(2);
     },
     name(key) {
       switch (key) {
         case "average":
-          return "均价";
+          return "最近均价";
         case "currentAverage":
           return "当前均价";
         case "max":
-          return "最高价";
+          return "最近最高价";
         case "min":
-          return "最低价";
+          return "最近最低价";
+        case "worldName":
+          return "最低价服务器";
       }
     },
   },
@@ -113,14 +118,14 @@ Vue.component("price-show", {
   <div class="grid-content bg-purple">
     {{title}}
     <template v-for="(item, key) in data" :key="key">
-      <div>{{name(key)}}：<span class="price-show-num">{{item}}</span></div>
-      <el-progress  :show-text="false" :percentage="calP(item)">{{key}}</el-progress>
+      <div>{{name(key)}}：<span class="price-show-num">{{key != 'worldName' ? item : dcs[item || dc] }}</span></div>
+      <el-progress v-if="key != 'worldName'"  :show-text="false" :percentage="calP(item)">{{key}}</el-progress>
     </template>
   </div>
   `,
 });
 Vue.component("build4_table", {
-  props: ["data"],
+  props: ["data", "dc"],
   template: `
     <el-table :data="data" style="width: 100%">
       <el-table-column type="expand">
@@ -132,6 +137,7 @@ Vue.component("build4_table", {
             <el-table-column prop="price" label="价格">
               <template slot-scope="scope">
                 <price-show
+                  :dc="dc"
                   :data="scope.row.price.all"
                   title=""
                 ></price-show>
@@ -171,13 +177,14 @@ Vue.component("build4", {
   },
   template: `
     <el-row :gutter="20" v-loading="loading">
+      <el-col :xs="{span:24,offset:0}" :md="{span:24}">根据当前数据[currentAverage]字段计算</el-col>
       <el-col :xs="{span:24,offset:0}" :md="{span:12}">
         <el-header style="line-height:60px">高难</el-header>
-        <build4_table :data="dataHard"></build4_table>
+        <build4_table :dc="dc" :data="dataHard"></build4_table>
       </el-col>
       <el-col :xs="{span:24,offset:0}" :md="{span:12}">
         <el-header style="line-height:60px">80级</el-header>
-        <build4_table :data="dataNormal"></build4_table>
+        <build4_table :dc="dc" :data="dataNormal"></build4_table>
       </el-col>
     </el-row>
   `,
@@ -297,42 +304,44 @@ Vue.component("price-list-by-name", {
   },
   methods: {
     search() {
-      if(this.loading) return;
+      if (this.loading) return;
       this.data = [];
       this.loading = true;
-      searchNames(this.names, this.dc).catch(()=>{
-        this.data = [];
-        this.loading = false;
-      }).then((res) => {
-        this.data = res.map(
-          ({
-            info: { ID, Name, Icon, Url },
-            all: { average, currentAverage, max, min },
-            listings,
-            history,
-          }) => {
-            return {
-              ID,
-              Name,
-              Icon,
-              Url,
-              average,
-              currentAverage,
-              max,
-              min,
-              listings: listings.slice(20),
+      searchNames(this.names, this.dc)
+        .catch(() => {
+          this.data = [];
+          this.loading = false;
+        })
+        .then((res) => {
+          this.data = res.map(
+            ({
+              info: { ID, Name, Icon, Url },
+              all: { average, currentAverage, max, min },
+              listings,
               history,
-            };
-          }
-        );
-        this.loading = false;
-      });
+            }) => {
+              return {
+                ID,
+                Name,
+                Icon,
+                Url,
+                average,
+                currentAverage,
+                max,
+                min,
+                listings: listings.slice(20),
+                history,
+              };
+            }
+          );
+          this.loading = false;
+        });
     },
   },
   template: `
     <el-container v-loading="loading">
       <i class="el-icon-refresh refresh" @click="search"></i>
-      <el-table :data="data" stripe style="width: 100%">
+      <el-table :data="data" style="width: 100%">
       <el-table-column type="expand">
         <template slot-scope="props">
           <price-table
@@ -348,7 +357,7 @@ Vue.component("price-list-by-name", {
             <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
             </el-image>
             <a :href="wikiUrl + scope.row.Name" target="_blank">
-              <span class="search-res-info" style="color:#606266"> {{ scope.row.Name }} </span>
+              <span class="search-res-info"> {{ scope.row.Name }} </span>
             </a>
           </template>
         </el-table-column>
@@ -388,7 +397,7 @@ function init() {
         host: apiHost,
         dcs,
         tags,
-        dc: "HuanYingQunDao",
+        dc: "LuXingNiao",
         favIds: [],
         // 搜索
         searchResult: [],
@@ -519,6 +528,7 @@ function getPrice(itemId, dc = "LuXingNiao", info) {
           currentAverage: currentAveragePrice.toFixed(0),
           max: maxPrice,
           min: minPrice,
+          worldName: listings.length ? listings[0].worldName || "" : "",
         },
         hq: {
           average: averagePriceHQ.toFixed(0),

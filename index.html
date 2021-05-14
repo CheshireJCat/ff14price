@@ -9,7 +9,7 @@
       href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/theme-chalk/index.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="main.css?v=1" />
+    <link rel="stylesheet" href="main.css?v=2" />
   </head>
 
   <body>
@@ -94,6 +94,7 @@
               <el-row :gutter="20" v-if="searchPriceRes.all.average > 0">
                 <el-col :xs="{span:24}" :md="{span:8}">
                   <price-show
+                    :dc="dc"
                     :data="searchPriceRes.all"
                     title="ALL"
                   ></price-show>
@@ -169,6 +170,6 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
     <script src="config.build4.js?v=1"></script>
     <script src="config.names.js?v=1"></script>
-    <script src="main.js?v=2"></script>
+    <script src="main.js?v=3"></script>
   </body>
 </html>
