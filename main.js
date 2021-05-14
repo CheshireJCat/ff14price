@@ -1,6 +1,12 @@
 const apiHost = "https://cafemaker.wakingsands.com";
 
-const tags = ["G12", "G10", "休闲", "第四期重建用的", "第四期重建用的最高级", "第四期重建用的特供"]
+const tags = [
+  "G12",
+  "G10",
+  "休闲",
+  "第四期重建用的最高级",
+  "第四期重建用的特供",
+];
 
 const dcs = {
   LuXingNiao: "陆行鸟跨服",
@@ -36,24 +42,24 @@ const price_default = {
   currentAverage: 0,
   max: 0,
   min: 0,
-}
+};
 
 const searchPriceRes_default = {
   all: price_default,
   hq: price_default,
   nq: price_default,
   listings: [],
-  history: []
-}
+  history: [],
+};
 
-Vue.component('price-table', {
+Vue.component("price-table", {
   props: ["data", "time-text", "dc", "name-text"],
   filters: {
-    fmtCoin
+    fmtCoin,
   },
   template: `
     <el-table :data="data" stripe style="width: 100%">
-      <el-table-column label="HQ">
+      <el-table-column label="HQ" width="30px">
         <template slot-scope="scope">
           <span>{{ scope.row.hq ? "√" : "" }}</span>
         </template>
@@ -81,26 +87,30 @@ Vue.component('price-table', {
         </template>
       </el-table-column>
     </el-table>
-  `
-})
-
-Vue.component('price-show', {
+  `,
+});
+// 各种价格展示
+Vue.component("price-show", {
   props: ["data", "title"],
   computed: {
     maxPrice() {
       return Math.max(...Object.values(this.data));
-    }
+    },
   },
   methods: {
     calP(value) {
-      return (value * 100 / this.maxPrice).toFixed(2);
+      return ((value * 100) / this.maxPrice).toFixed(2);
     },
     name(key) {
       switch (key) {
-        case "average": return "总平均值";
-        case "currentAverage": return "最近平均值";
-        case "max": return "最高价";
-        case "min": return "最低价";
+        case "average":
+          return "总平均值";
+        case "currentAverage":
+          return "最近平均值";
+        case "max":
+          return "最高价";
+        case "min":
+          return "最低价";
       }
     },
   },
@@ -112,50 +122,208 @@ Vue.component('price-show', {
       <el-progress  :show-text="false" :percentage="calP(item)">{{key}}</el-progress>
     </template>
   </div></el-col>
-  `
-})
-
-Vue.component('build4', {
+  `,
+});
+Vue.component("build4_table", {
+  props: ["data"],
+  template: `
+    <el-table :data="data" style="width: 100%">
+      <el-table-column type="expand">
+        <template slot-scope="props">
+          <el-table :data="props.row.info" style="width: 100%" style="background:#eee;">
+            <el-table-column label="材料名" prop="name"> </el-table-column>
+            <el-table-column label="需要数量" prop="count">
+            </el-table-column>
+            <el-table-column prop="price" label="价格">
+              <template slot-scope="scope">
+                <price-show
+                  :data="scope.row.price.all"
+                  title=""
+                ></price-show>
+              </template>
+            </el-table-column>
+          </el-table>
+        </template>
+      </el-table-column>
+      <el-table-column label="职业" prop="proName"> </el-table-column>
+      <el-table-column label="名称" prop="name"> </el-table-column>
+      <el-table-column label="最低成本价" prop="cost"> </el-table-column>
+    </el-table>
+  `,
+});
+// 重建4模块
+// config_build4_item
+// config_build4_hash_id_item
+// config_build4_hash_name_id
+// config_build4
+Vue.component("build4", {
   props: ["dc"],
   data() {
     return {
-      host: apiHost,
-      name: "第四期重建用的",
+      loading: false,
       data: [],
-      loading: false
-    }
+      dataNormal: [],
+      dataHard: [],
+    };
   },
   mounted() {
     this.search();
   },
+  template: `
+  <el-container v-loading="loading">
+    <el-header style="line-height:60px">高难</el-header>
+    <build4_table :data="dataHard"></build4_table>
+    <el-header style="line-height:60px">80级</el-header>
+    <build4_table :data="dataNormal"></build4_table>
+  </el-container>
+  `,
   methods: {
     search() {
-      searchItemByName("第四期重建用的").then(items => {
-        this.loading = true;
-        Promise.all(items.map(item => {
-          return getPrice(item.ID, this.dc, item)
-        })).then(res => {
-          this.loading = false;
-          console.log(res);
-          this.data = res.map(({ info: { ID, Name, Icon, Url }, all: { average, currentAverage, max, min }, listings, history }) => {
-            return { ID, Name, Icon, Url, average, currentAverage, max, min, listings, history }
-          });
-        }).catch(reason => {
-          this.loading = false;
-          console.log('reason:', reason);
-        })
+      this.loading = true;
+      // 获取所有价格
+      this.getItemsPrice(() => {
+        let data = config_build4.map(({ proName, normal, hard }) => {
+          let res = {
+            proName,
+            normal: getRes(normal),
+            hard: getRes(hard),
+          };
+          return res;
+        });
+        this.dataNormal = data.map(({ proName, normal }) => {
+          return {
+            proName,
+            ...normal,
+          };
+        }).sort((a,b)=>{
+          return a.cost - b.cost;
+        });
+        this.dataHard = data.map(({ proName, hard }) => {
+          return {
+            proName,
+            ...hard,
+          };
+        }).sort((a,b)=>{
+          return a.cost - b.cost;
+        });
+        this.loading = false;
       });
-    }
+
+      function getRes(data) {
+        let info = cmbInfo(data.list);
+        return {
+          name: data.name,
+          info: info,
+          cost: calCost(info),
+        };
+      }
+
+      function cmbInfo(data) {
+        return data.map((item) => {
+          return {
+            ...item,
+            price: config_build4_hash_id_item[item.id].price,
+          };
+        });
+      }
+
+      function calCost(data) {
+        return data.reduce(
+          (
+            total,
+            {
+              count,
+              price: {
+                all: { min },
+              },
+            }
+          ) => {
+            return total + min * count;
+          },
+          0
+        );
+      }
+    },
+    getItemsPrice(callback) {
+      return Promise.all(
+        config_build4_item.map(({ ID }) => {
+          return getPrice(ID, this.dc);
+        })
+      )
+      .catch(()=>{
+        this.loading = true;
+      })
+      .then((res) => {
+        res.forEach((priceItem) => {
+          let { ID } = priceItem;
+          config_build4_hash_id_item[ID].price = priceItem;
+        });
+        callback();
+      });
+    },
+  },
+});
+
+Vue.component("price-list", {
+  props: ["dc", "data", "host"],
+  // data:{
+  //   ID,
+  //   Name,
+  //   Icon,
+  //   Url,
+  //   average,
+  //   currentAverage,
+  //   max,
+  //   min,
+  //   listings,
+  //   history,
+  // }},
+  methods: {
+    search() {
+      searchItemByName("第四期重建用的").then((items) => {
+        this.loading = true;
+        Promise.all(
+          this.ids.map((id) => {
+            return getPrice(id, this.dc);
+          })
+        )
+          .then((res) => {
+            this.loading = false;
+            this.data = res.map(
+              ({
+                info: { ID, Name, Icon, Url },
+                all: { average, currentAverage, max, min },
+                listings,
+                history,
+              }) => {
+                return {
+                  ID,
+                  Name,
+                  Icon,
+                  Url,
+                  average,
+                  currentAverage,
+                  max,
+                  min,
+                  listings,
+                  history,
+                };
+              }
+            );
+          })
+          .catch((reason) => {
+            this.loading = false;
+            console.log("reason:", reason);
+          });
+      });
+    },
   },
   filters: {
-    fmtCoin
+    fmtCoin,
   },
   template: `
   <el-main>
-    <el-header v-if="!loading">
-      <el-button icon="el-icon-refresh" @click="search">刷新</el-button>
-    </el-header>
-    <el-table :data="data" stripe style="width: 100%" v-loading="loading">
+    <el-table :data="data" stripe style="width: 100%">
       <el-table-column label="名称">
         <template slot-scope="scope">
           <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
@@ -187,8 +355,8 @@ Vue.component('build4', {
       </el-table-column>
     </el-table>
   </el-main>
-  `
-})
+  `,
+});
 
 init();
 
@@ -214,11 +382,11 @@ function init() {
           icon: "",
           url: "",
         },
-        searchPriceRes: searchPriceRes_default
-      }
+        searchPriceRes: searchPriceRes_default,
+      };
     },
     filters: {
-      fmtCoin
+      fmtCoin,
     },
     mounted() {
       document.getElementById("app").style.display = "block";
@@ -233,10 +401,10 @@ function init() {
         this.searchItemName = item;
         Vue.nextTick(() => {
           this.$refs.searchInput.focus();
-        })
+        });
       },
       handleTabChange({ name }) {
-        console.log(name)
+        console.log(name);
       },
       searchItem(queryString, callback) {
         if (!queryString) return callback([]);
@@ -281,11 +449,13 @@ function init() {
           });
       },
       searchNames(names) {
-        Promise.all(names.map(item => searchItemByName(item))).then((res) => {
-          console.log(res);
-        }).catch(reason => {
-          console.log(reason)
-        });
+        Promise.all(names.map((item) => searchItemByName(item)))
+          .then((res) => {
+            console.log(res);
+          })
+          .catch((reason) => {
+            console.log(reason);
+          });
       },
       collectItem(id) {
         id = parseInt(id);
@@ -304,83 +474,89 @@ function init() {
 // 获取价格
 function getPrice(itemId, dc = "LuXingNiao", info) {
   if (!itemId) return null;
-  return fetchGet(
-    `https://universalis.app/api/${dc}/${itemId}`
-  ).then(({
-    averagePrice = 0,
-    averagePriceHQ = 0,
-    averagePriceNQ = 0,
-    currentAveragePrice = 0,
-    currentAveragePriceHQ = 0,
-    currentAveragePriceNQ = 0,
-    maxPrice = 0,
-    maxPriceHQ = 0,
-    maxPriceNQ = 0,
-    minPrice = 0,
-    minPriceHQ = 0,
-    minPriceNQ = 0,
-    listings = [],
-    recentHistory = [],
-  }) => {
-    return {
-      info,
-      all: {
-        average: averagePrice,
-        currentAverage: currentAveragePrice,
-        max: maxPrice,
-        min: minPrice,
-      },
-      hq: {
-        average: averagePriceHQ,
-        currentAverage: currentAveragePriceHQ,
-        max: maxPriceHQ,
-        min: minPriceHQ,
-      },
-      nq: {
-        average: averagePriceNQ,
-        currentAverage: currentAveragePriceNQ,
-        max: maxPriceNQ,
-        min: minPriceNQ,
-      },
-      listings: listings.map(({ hq,
-        lastReviewTime,
-        pricePerUnit,
-        quantity,
-        retainerName,
-        total,
-        worldName
-      }) => {
-        return {
-          hq,
-          pricePerUnit,
-          timestamp: fmtTime(lastReviewTime),
-          quantity,
-          total,
-          username: retainerName,
-          worldName
-        }
-      }),
-      history: recentHistory.map(({
-        buyerName,
-        hq,
-        pricePerUnit,
-        quantity,
-        timestamp,
-        total,
-        worldName
-      }) => {
-        return {
-          hq,
-          pricePerUnit,
-          timestamp: fmtTime(timestamp),
-          quantity,
-          total,
-          username: buyerName,
-          worldName,
-        }
-      }),
+  return fetchGet(`https://universalis.app/api/${dc}/${itemId}`).then(
+    ({
+      averagePrice = 0,
+      averagePriceHQ = 0,
+      averagePriceNQ = 0,
+      currentAveragePrice = 0,
+      currentAveragePriceHQ = 0,
+      currentAveragePriceNQ = 0,
+      maxPrice = 0,
+      maxPriceHQ = 0,
+      maxPriceNQ = 0,
+      minPrice = 0,
+      minPriceHQ = 0,
+      minPriceNQ = 0,
+      listings = [],
+      recentHistory = [],
+    }) => {
+      return {
+        ID: itemId,
+        info,
+        all: {
+          average: averagePrice,
+          currentAverage: currentAveragePrice,
+          max: maxPrice,
+          min: minPrice,
+        },
+        hq: {
+          average: averagePriceHQ,
+          currentAverage: currentAveragePriceHQ,
+          max: maxPriceHQ,
+          min: minPriceHQ,
+        },
+        nq: {
+          average: averagePriceNQ,
+          currentAverage: currentAveragePriceNQ,
+          max: maxPriceNQ,
+          min: minPriceNQ,
+        },
+        listings: listings.map(
+          ({
+            hq,
+            lastReviewTime,
+            pricePerUnit,
+            quantity,
+            retainerName,
+            total,
+            worldName,
+          }) => {
+            return {
+              hq,
+              pricePerUnit,
+              timestamp: fmtTime(lastReviewTime),
+              quantity,
+              total,
+              username: retainerName,
+              worldName,
+            };
+          }
+        ),
+        history: recentHistory.map(
+          ({
+            buyerName,
+            hq,
+            pricePerUnit,
+            quantity,
+            timestamp,
+            total,
+            worldName,
+          }) => {
+            return {
+              hq,
+              pricePerUnit,
+              timestamp: fmtTime(timestamp),
+              quantity,
+              total,
+              username: buyerName,
+              worldName,
+            };
+          }
+        ),
+      };
     }
-  })
+  );
 }
 
 // 通过名称搜索物品
@@ -429,17 +605,15 @@ function cmbGetParams(params) {
     .join("&");
 }
 
-
 function nameAbbr(name) {
   if (name == "G12") {
-    return "陈旧的缠尾蛟革地图"
+    return "陈旧的缠尾蛟革地图";
   } else if (name == "G10") {
-    return "陈旧的瞪羚革地图"
+    return "陈旧的瞪羚革地图";
   } else {
     return name;
   }
 }
-
 
 function fmtTime(value, isSeconds = true, format = "MM-dd hh:mm:ss") {
   let time = new Date(isSeconds ? value * 1000 : value);
@@ -462,9 +636,7 @@ function fmtTime(value, isSeconds = true, format = "MM-dd hh:mm:ss") {
     if (new RegExp("(" + k + ")").test(format)) {
       format = format.replace(
         RegExp.$1,
-        RegExp.$1.length == 1
-          ? o[k]
-          : ("00" + o[k]).substr(("" + o[k]).length)
+        RegExp.$1.length == 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length)
       );
     }
   }
@@ -474,3 +646,16 @@ function fmtTime(value, isSeconds = true, format = "MM-dd hh:mm:ss") {
 function fmtCoin(value) {
   return value.toLocaleString("en-US");
 }
+
+// {
+//   let waits = [];
+//   // 统计要查询的物品id
+//   config_build4.forEach((pro) => {
+//     [80, "s80"].forEach((key) => {
+//       pro[key].list.forEach((item) => {
+//         item.id = config_build4_hash_name_id[item.name]
+//       });
+//     });
+//   });
+//   JSON.stringify(config_build4)
+// }
