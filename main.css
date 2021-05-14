@@ -11,6 +11,39 @@ a:visited {
 .app {
   margin: 0 auto;
 }
+.header{
+  line-height: 60px;
+}
+.main{
+  min-height: calc(100vh - 120px);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.footer{
+  text-align: center;
+}
+.footer a{
+  margin-left: 10px;
+}
+.refresh{
+  position: absolute;
+  top: 10px;
+  left: 8px;
+  color: #999;
+  z-index: 1;
+  font-size: 30px;
+  cursor: pointer;
+}
+.select-dc{
+  position: absolute;
+  color: #fff;
+  z-index: 1;
+  cursor: pointer;
+  right: 20px;
+  top: 10px;
+  width: 120px;
+}
+
 .search-input {
   width: 100%;
 }
@@ -44,8 +77,20 @@ a:visited {
   width: 50%;
 }
 
+.price-show-num{
+  display: inline-block;
+}
+
 .el-tabs__item{
   color: #fff;
+}
+
+.el-table__expanded-cell{
+  padding: 10px 20px!important;
+}
+
+.el-col {
+  margin: 10px 0;
 }
 
 .el-tabs__item.is-active,.el-tabs__item:hover,.el-tabs__active-bar{

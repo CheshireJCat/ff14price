@@ -1,13 +1,5 @@
 const apiHost = "https://cafemaker.wakingsands.com";
 
-const tags = [
-  "G12",
-  "G10",
-  "休闲",
-  "第四期重建用的最高级",
-  "第四期重建用的特供",
-];
-
 const dcs = {
   LuXingNiao: "陆行鸟跨服",
   HongYuHai: "红玉海",
@@ -45,9 +37,11 @@ const price_default = {
 };
 
 const searchPriceRes_default = {
+  ID: 0,
   all: price_default,
   hq: price_default,
   nq: price_default,
+  info: {},
   listings: [],
   history: [],
 };
@@ -64,14 +58,20 @@ Vue.component("price-table", {
           <span>{{ scope.row.hq ? "√" : "" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="pricePerUnit" label="单价" align="center">
+      <el-table-column prop="pricePerUnit" label="单价" align="center" width="120px">
         <template slot-scope="scope">
           <span>{{ scope.row.pricePerUnit | fmtCoin }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="timestamp" :label="timeText" align="center">
+      <el-table-column prop="worldName" label="区服" align="center" width="120px">
+        <template slot-scope="scope">
+          <span>{{ scope.row.worldName ? dcs[scope.row.worldName] : dcs[dc]
+            }}</span>
+        </template>
       </el-table-column>
-      <el-table-column prop="total" label="数量" align="center">
+      <el-table-column prop="timestamp" :label="timeText" align="center" width="120px">
+      </el-table-column>
+      <el-table-column prop="quantity" label="数量" align="center">
       </el-table-column>
       <el-table-column prop="total" label="总价" align="center">
         <template slot-scope="scope">
@@ -79,12 +79,6 @@ Vue.component("price-table", {
         </template>
       </el-table-column>
       <el-table-column prop="username" :label="nameText" align="center">
-      </el-table-column>
-      <el-table-column prop="worldName" label="区服" align="center">
-        <template slot-scope="scope">
-          <span>{{ scope.row.worldName ? dcs[scope.row.worldName] : dcs[dc]
-            }}</span>
-        </template>
       </el-table-column>
     </el-table>
   `,
@@ -104,9 +98,9 @@ Vue.component("price-show", {
     name(key) {
       switch (key) {
         case "average":
-          return "总平均值";
+          return "均价";
         case "currentAverage":
-          return "最近平均值";
+          return "当前均价";
         case "max":
           return "最高价";
         case "min":
@@ -115,13 +109,13 @@ Vue.component("price-show", {
     },
   },
   template: `
-  <el-col :span="8"><div class="grid-content bg-purple">
+  <div class="grid-content bg-purple">
     {{title}}
     <template v-for="(item, key) in data" :key="key">
-      <div>{{name(key)}}：{{item}}</div>
+      <div>{{name(key)}}：<span class="price-show-num">{{item}}</span></div>
       <el-progress  :show-text="false" :percentage="calP(item)">{{key}}</el-progress>
     </template>
-  </div></el-col>
+  </div>
   `,
 });
 Vue.component("build4_table", {
@@ -166,16 +160,25 @@ Vue.component("build4", {
       dataHard: [],
     };
   },
+  watch: {
+    dc: function (newVal, oldVal) {
+      this.search();
+    },
+  },
   mounted() {
     this.search();
   },
   template: `
-  <el-container v-loading="loading">
-    <el-header style="line-height:60px">高难</el-header>
-    <build4_table :data="dataHard"></build4_table>
-    <el-header style="line-height:60px">80级</el-header>
-    <build4_table :data="dataNormal"></build4_table>
-  </el-container>
+    <el-row :gutter="20" v-loading="loading">
+      <el-col :xs="{span:24,offset:0}" :md="{span:12}">
+        <el-header style="line-height:60px">高难</el-header>
+        <build4_table :data="dataHard"></build4_table>
+      </el-col>
+      <el-col :xs="{span:24,offset:0}" :md="{span:12}">
+        <el-header style="line-height:60px">80级</el-header>
+        <build4_table :data="dataNormal"></build4_table>
+      </el-col>
+    </el-row>
   `,
   methods: {
     search() {
@@ -190,22 +193,26 @@ Vue.component("build4", {
           };
           return res;
         });
-        this.dataNormal = data.map(({ proName, normal }) => {
-          return {
-            proName,
-            ...normal,
-          };
-        }).sort((a,b)=>{
-          return a.cost - b.cost;
-        });
-        this.dataHard = data.map(({ proName, hard }) => {
-          return {
-            proName,
-            ...hard,
-          };
-        }).sort((a,b)=>{
-          return a.cost - b.cost;
-        });
+        this.dataNormal = data
+          .map(({ proName, normal }) => {
+            return {
+              proName,
+              ...normal,
+            };
+          })
+          .sort((a, b) => {
+            return a.cost - b.cost;
+          });
+        this.dataHard = data
+          .map(({ proName, hard }) => {
+            return {
+              proName,
+              ...hard,
+            };
+          })
+          .sort((a, b) => {
+            return a.cost - b.cost;
+          });
         this.loading = false;
       });
 
@@ -234,11 +241,11 @@ Vue.component("build4", {
             {
               count,
               price: {
-                all: { min },
+                all: { currentAverage },
               },
             }
           ) => {
-            return total + min * count;
+            return Math.round(total + currentAverage * count);
           },
           0
         );
@@ -250,111 +257,122 @@ Vue.component("build4", {
           return getPrice(ID, this.dc);
         })
       )
-      .catch(()=>{
-        this.loading = true;
-      })
-      .then((res) => {
-        res.forEach((priceItem) => {
-          let { ID } = priceItem;
-          config_build4_hash_id_item[ID].price = priceItem;
+        .catch(() => {
+          this.loading = true;
+        })
+        .then((res) => {
+          res.forEach((priceItem) => {
+            let { ID } = priceItem;
+            config_build4_hash_id_item[ID].price = priceItem;
+          });
+          callback();
         });
-        callback();
-      });
     },
   },
 });
 
-Vue.component("price-list", {
-  props: ["dc", "data", "host"],
-  // data:{
-  //   ID,
-  //   Name,
-  //   Icon,
-  //   Url,
-  //   average,
-  //   currentAverage,
-  //   max,
-  //   min,
-  //   listings,
-  //   history,
-  // }},
-  methods: {
-    search() {
-      searchItemByName("第四期重建用的").then((items) => {
-        this.loading = true;
-        Promise.all(
-          this.ids.map((id) => {
-            return getPrice(id, this.dc);
-          })
-        )
-          .then((res) => {
-            this.loading = false;
-            this.data = res.map(
-              ({
-                info: { ID, Name, Icon, Url },
-                all: { average, currentAverage, max, min },
-                listings,
-                history,
-              }) => {
-                return {
-                  ID,
-                  Name,
-                  Icon,
-                  Url,
-                  average,
-                  currentAverage,
-                  max,
-                  min,
-                  listings,
-                  history,
-                };
-              }
-            );
-          })
-          .catch((reason) => {
-            this.loading = false;
-            console.log("reason:", reason);
-          });
+Vue.component("price-list-by-name", {
+  props: ["names", "dc", "host"],
+  data() {
+    return {
+      loading: false,
+      data: [],
+    };
+  },
+  computed: {
+    ids() {
+      return this.data.map(({ ID }) => {
+        return ID;
       });
     },
   },
-  filters: {
-    fmtCoin,
+  watch: {
+    dc() {
+      this.search();
+    },
+  },
+  mounted() {
+    this.search();
+  },
+  methods: {
+    search() {
+      if(this.loading) return;
+      this.data = [];
+      this.loading = true;
+      searchNames(this.names, this.dc).catch(()=>{
+        this.data = [];
+        this.loading = false;
+      }).then((res) => {
+        this.data = res.map(
+          ({
+            info: { ID, Name, Icon, Url },
+            all: { average, currentAverage, max, min },
+            listings,
+            history,
+          }) => {
+            return {
+              ID,
+              Name,
+              Icon,
+              Url,
+              average,
+              currentAverage,
+              max,
+              min,
+              listings: listings.slice(20),
+              history,
+            };
+          }
+        );
+        this.loading = false;
+      });
+    },
   },
   template: `
-  <el-main>
-    <el-table :data="data" stripe style="width: 100%">
-      <el-table-column label="名称">
-        <template slot-scope="scope">
-          <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
-          </el-image>
-          <a :href="host + scope.row.Url">
-            <span class="search-res-info" style="color:#606266"> {{ scope.row.Name }} </span>
-          </a>
+    <el-container v-loading="loading">
+      <i class="el-icon-refresh refresh" @click="search"></i>
+      <el-table :data="data" stripe style="width: 100%">
+      <el-table-column type="expand">
+        <template slot-scope="props">
+          <price-table
+            :data="props.row.listings"
+            time-text="上报时间"
+            name-text="雇员名"
+            :dc="dc"
+          />
         </template>
       </el-table-column>
-      <el-table-column prop="average" label="平均价" align="center">
-        <template slot-scope="scope">
-          <span>{{ scope.row.average | fmtCoin }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="currentAverage" label="最近平均价" align="center">
-        <template slot-scope="scope">
-          <span>{{ scope.row.currentAverage | fmtCoin }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="max" label="最高价" align="center">
-        <template slot-scope="scope">
-          <span>{{ scope.row.max | fmtCoin }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="min" label="最低价" align="center">
-        <template slot-scope="scope">
-          <span>{{ scope.row.min | fmtCoin }}</span>
-        </template>
-      </el-table-column>
-    </el-table>
-  </el-main>
+        <el-table-column label="名称">
+          <template slot-scope="scope">
+            <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
+            </el-image>
+            <a :href="host + scope.row.Url">
+              <span class="search-res-info" style="color:#606266"> {{ scope.row.Name }} </span>
+            </a>
+          </template>
+        </el-table-column>
+        <el-table-column prop="average" label="均价" align="center">
+          <template slot-scope="scope">
+            <span>{{ scope.row.average | fmtCoin }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="currentAverage" label="数据均价" align="center">
+          <template slot-scope="scope">
+            <span>{{ scope.row.currentAverage | fmtCoin }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="max" label="最高价" align="center">
+          <template slot-scope="scope">
+            <span>{{ scope.row.max | fmtCoin }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="min" label="最低价" align="center">
+          <template slot-scope="scope">
+            <span>{{ scope.row.min | fmtCoin }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-container>
   `,
 });
 
@@ -365,7 +383,7 @@ function init() {
     el: "#app",
     data() {
       return {
-        activeIndex: "1",
+        activeIndex: "seachPrice",
         host: apiHost,
         dcs,
         tags,
@@ -393,8 +411,10 @@ function init() {
     },
     methods: {
       handleDcChange(dc) {
-        if (this.searchPriceItem && this.searchPriceItem.id) {
-          this.getItemPrice(this.searchPriceItem.id);
+        if (this.activeIndex === "seachPrice") {
+          if (this.searchPriceItem && this.searchPriceItem.id) {
+            this.getItemPrice(this.searchPriceItem.id);
+          }
         }
       },
       searchTag(item) {
@@ -427,6 +447,11 @@ function init() {
           }
         });
       },
+      addTag(name) {
+        if (!this.tags.includes(name)) {
+          this.tags.push(name);
+        }
+      },
       searchPrice({ ID = 0, Url = "", Icon = "", Name = "" }) {
         this.searchPriceItem = {
           id: ID,
@@ -434,6 +459,9 @@ function init() {
           name: Name,
           url: Url,
         };
+        if (Name) {
+          this.addTag(Name);
+        }
         this.getItemPrice(ID);
       },
       getItemPrice(id) {
@@ -446,15 +474,6 @@ function init() {
           .then((res) => {
             this.searchPriceRes = res;
             this.loading_searchPrice = false;
-          });
-      },
-      searchNames(names) {
-        Promise.all(names.map((item) => searchItemByName(item)))
-          .then((res) => {
-            console.log(res);
-          })
-          .catch((reason) => {
-            console.log(reason);
           });
       },
       collectItem(id) {
@@ -495,20 +514,20 @@ function getPrice(itemId, dc = "LuXingNiao", info) {
         ID: itemId,
         info,
         all: {
-          average: averagePrice,
-          currentAverage: currentAveragePrice,
+          average: averagePrice.toFixed(0),
+          currentAverage: currentAveragePrice.toFixed(0),
           max: maxPrice,
           min: minPrice,
         },
         hq: {
-          average: averagePriceHQ,
-          currentAverage: currentAveragePriceHQ,
+          average: averagePriceHQ.toFixed(0),
+          currentAverage: currentAveragePriceHQ.toFixed(0),
           max: maxPriceHQ,
           min: minPriceHQ,
         },
         nq: {
-          average: averagePriceNQ,
-          currentAverage: currentAveragePriceNQ,
+          average: averagePriceNQ.toFixed(0),
+          currentAverage: currentAveragePriceNQ.toFixed(0),
           max: maxPriceNQ,
           min: minPriceNQ,
         },
@@ -577,6 +596,20 @@ function searchItemByName(name) {
   }) {
     return Results;
   });
+}
+
+function searchNames(names, dc) {
+  return Promise.all(
+    names.map((name) => {
+      return searchItemByName(name).then((res) => {
+        if (res.length == 1 && res[0]) {
+          return getPrice(res[0].ID, dc, res[0]);
+        } else {
+          return Object.assign({}, searchPriceRes_default);
+        }
+      });
+    })
+  );
 }
 
 function searchItemByIds(ids) {
