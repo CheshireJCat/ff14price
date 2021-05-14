@@ -329,8 +329,8 @@ Vue.component("price-list-by-name", {
                 currentAverage,
                 max,
                 min,
-                listings: listings.slice(20),
-                history,
+                listings: listings.slice(0,15),
+                history: listings.slice(0,15),
               };
             }
           );
