@@ -1,4 +1,5 @@
 const apiHost = "https://cafemaker.wakingsands.com";
+const wikiUrl = "https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:";
 
 const dcs = {
   LuXingNiao: "陆行鸟跨服",
@@ -346,7 +347,7 @@ Vue.component("price-list-by-name", {
           <template slot-scope="scope">
             <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
             </el-image>
-            <a :href="host + scope.row.Url">
+            <a :href="wikiUrl + scope.row.Name" target="_blank">
               <span class="search-res-info" style="color:#606266"> {{ scope.row.Name }} </span>
             </a>
           </template>
