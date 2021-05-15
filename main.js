@@ -131,6 +131,25 @@ Vue.component("build4_table", {
       <el-table-column type="expand">
         <template slot-scope="props">
           <el-table :data="props.row.info" style="width: 100%" style="background:#eee;">
+            <el-table-column type="expand">
+              <template slot-scope="props">
+                <el-container style="background: #777777; padding: 5px 8px;">购买记录</el-container>
+                <price-table
+                  :data="props.row.price.history.slice(0,10)"
+                  time-text="购买时间"
+                  name-text="玩家名"
+                  :dc="dc"
+                ></price-table>
+                <el-container style="background: #777777; padding: 5px 8px;">交易板价格</el-container>
+                <price-table
+                  :data="props.row.price.listings.slice(0,10)"
+                  time-text="上报时间"
+                  name-text="雇员名"
+                  :dc="dc"
+                >
+                </price-table>
+              </template>
+            </el-table-column>
             <el-table-column label="材料名" prop="name"> </el-table-column>
             <el-table-column label="需要数量" prop="count">
             </el-table-column>
