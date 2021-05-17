@@ -161,11 +161,21 @@
           </el-tab-pane>
           <!-- 价格查询 end -->
           <el-tab-pane label="四期重建成本" name="rebuild4" :lazy="true">
-            <build4 :dc="dc"> </build4>
+            <build4 :dc="dc" :tags="tags"> </build4>
           </el-tab-pane>
           <!-- 常用查询 -->
-          <el-tab-pane v-for="(item, index) in tabTags" :key="index" :label="item.name" :lazy="true">
-            <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" @add-tag="addTag" @remove-tag="removeTag" />
+          <el-tab-pane
+            v-for="(item, index) in tabTags"
+            :key="index"
+            :label="item.name"
+            :lazy="true"
+          >
+            <price-list-by-name
+              :names="item.data"
+              :dc="dc"
+              :host="host"
+              :tags="tags"
+            />
           </el-tab-pane>
         </el-tabs>
       </el-main>
@@ -186,6 +196,6 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
     <script src="config.build4.js?v=2"></script>
     <script src="config.names.js?v=4"></script>
-    <script src="main.js?v=6"></script>
+    <script src="main.js?v=7"></script>
   </body>
 </html>

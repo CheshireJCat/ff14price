@@ -1,6 +1,8 @@
 const apiHost = "https://cafemaker.wakingsands.com";
 const wikiUrl = "https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:";
 
+const Event = new Vue();
+
 const dcs = {
   LuXingNiao: "陆行鸟跨服",
   HongYuHai: "红玉海",
@@ -116,6 +118,12 @@ Vue.component("price-show", {
           return "最低价服务器";
       }
     },
+    addTag(name) {
+      Event.$emit("addTag", name);
+    },
+    removeTag(name) {
+      Event.$emit("removeTag", name);
+    },
   },
   template: `
   <div class="grid-content bg-purple">
@@ -128,7 +136,15 @@ Vue.component("price-show", {
   `,
 });
 Vue.component("build4_table", {
-  props: ["data", "dc"],
+  props: ["data", "dc", "tags"],
+  methods: {
+    addTag(name) {
+      Event.$emit("addTag", name);
+    },
+    removeTag(name) {
+      Event.$emit("removeTag", name);
+    },
+  },
   template: `
     <el-table :data="data" style="width: 100%">
       <el-table-column type="expand">
@@ -156,6 +172,22 @@ Vue.component("build4_table", {
               </template>
             </el-table-column>
             <el-table-column label="材料名" prop="name"> </el-table-column>
+            <el-table-column label="收藏" align="center">
+              <template slot-scope="scope">
+                <span
+                  v-if="!tags.includes(scope.row.name)"
+                  class="search-res-star"
+                  v-on:click="addTag(scope.row.name)"
+                  ><i class="el-icon-star-off"></i> 收藏</span
+                >
+                <span
+                  v-else
+                  class="search-res-star"
+                  v-on:click="removeTag(scope.row.name)"
+                  ><i class="el-icon-star-on"></i> 已收藏</span
+                >
+              </template>
+            </el-table-column>
             <el-table-column label="需要数量" prop="count">
             </el-table-column>
             <el-table-column prop="price" label="价格">
@@ -173,6 +205,7 @@ Vue.component("build4_table", {
       <el-table-column label="职业" prop="proName"> </el-table-column>
       <el-table-column label="名称" prop="name"> </el-table-column>
       <el-table-column label="最低成本价" align="right" prop="cost"> </el-table-column>
+      
     </el-table>
   `,
 });
@@ -182,7 +215,7 @@ Vue.component("build4_table", {
 // config_build4_hash_name_id
 // config_build4
 Vue.component("build4", {
-  props: ["dc"],
+  props: ["dc", "tags"],
   data() {
     return {
       loading: false,
@@ -204,11 +237,11 @@ Vue.component("build4", {
       <el-col :xs="{span:24,offset:0}" :md="{span:24}">根据当前数据[交易板最低价格]计算</el-col>
       <el-col :xs="{span:24,offset:0}" :md="{span:12}">
         <el-header style="line-height:60px">高难</el-header>
-        <build4_table :dc="dc" :data="dataHard"></build4_table>
+        <build4_table :dc="dc" :data="dataHard" :tags="tags"></build4_table>
       </el-col>
       <el-col :xs="{span:24,offset:0}" :md="{span:12}">
         <el-header style="line-height:60px">80级</el-header>
-        <build4_table :dc="dc" :data="dataNormal"></build4_table>
+        <build4_table :dc="dc" :data="dataNormal" :tags="tags"></build4_table>
       </el-col>
     </el-row>
   `,
@@ -304,7 +337,7 @@ Vue.component("build4", {
 });
 
 Vue.component("price-list-by-name", {
-  props: ["names", "dc", "host","tags"],
+  props: ["names", "dc", "host", "tags"],
   data() {
     return {
       loading: false,
@@ -360,10 +393,10 @@ Vue.component("price-list-by-name", {
         });
     },
     addTag(name) {
-      this.$emit("add-tag", name);
+      Event.$emit("addTag", name);
     },
     removeTag(name) {
-      this.$emit("remove-tag", name);
+      Event.$emit("removeTag", name);
     },
   },
   template: `
@@ -452,6 +485,20 @@ function init() {
     mounted() {
       document.getElementById("app").style.display = "block";
       this.tags = this.getLocalTags();
+      Event.$on("addTag", (name) => {
+        this.addTag(name);
+      });
+      Event.$on("removeTag", (name) => {
+        this.removeTag(name);
+      });
+    },
+    unmounted() {
+      Event.$off("addTag", (name) => {
+        this.addTag(name);
+      });
+      Event.$off("removeTag", (name) => {
+        this.removeTag(name);
+      });
     },
     methods: {
       handleDcChange(dc) {
@@ -492,7 +539,7 @@ function init() {
         });
       },
       addTag(name) {
-        console.log(name)
+        console.log(name);
         if (this.tags.length <= 30) {
           if (!this.tags.includes(name)) {
             this.tags.push(name);
