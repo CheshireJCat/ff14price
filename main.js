@@ -36,6 +36,7 @@ const price_default = {
   max: 0,
   min: 0,
   worldName: "",
+  currentMin: 0
 };
 
 const searchPriceRes_default = {
@@ -49,12 +50,12 @@ const searchPriceRes_default = {
 };
 
 Vue.component("price-table", {
-  props: ["data", "time-text", "dc", "name-text"],
+  props: ["data", "time-text", "dc", "name-text","lazy"],
   filters: {
     fmtCoin,
   },
   template: `
-    <el-table :data="data" style="width: 100%">
+    <el-table :data="data" style="width: 100%" :lazy="lazy || false">
       <el-table-column label="HQ" width="30px">
         <template slot-scope="scope">
           <span>{{ scope.row.hq ? "√" : "" }}</span>
@@ -141,6 +142,7 @@ Vue.component("build4_table", {
                   time-text="购买时间"
                   name-text="玩家名"
                   :dc="dc"
+                  :lazy="true"
                 ></price-table>
                 <el-container style="background: #777777; padding: 5px 8px;">交易板价格</el-container>
                 <price-table
@@ -148,6 +150,7 @@ Vue.component("build4_table", {
                   time-text="上报时间"
                   name-text="雇员名"
                   :dc="dc"
+                  :lazy="true"
                 >
                 </price-table>
               </template>
@@ -198,7 +201,7 @@ Vue.component("build4", {
   },
   template: `
     <el-row :gutter="20" v-loading="loading">
-      <el-col :xs="{span:24,offset:0}" :md="{span:24}">根据当前数据[currentAverage]字段计算</el-col>
+      <el-col :xs="{span:24,offset:0}" :md="{span:24}">根据当前数据[交易板最低价格]计算</el-col>
       <el-col :xs="{span:24,offset:0}" :md="{span:12}">
         <el-header style="line-height:60px">高难</el-header>
         <build4_table :dc="dc" :data="dataHard"></build4_table>
@@ -521,8 +524,8 @@ function init() {
   });
 }
 
-function getPerPrice(currentAverage = 0, average = 0, listings = []) {
-  let res = currentAverage || average;
+function getPerPrice(average = 0, listings = []) {
+  let res = average;
   let min = res * 0.2;
   // 平均价的五分之一作为底线
   if (listings.length && min > 0) {
@@ -570,7 +573,7 @@ function getPrice(itemId, dc = "LuXingNiao", info) {
           max: maxPrice,
           min: minPrice,
           worldName: listings.length ? listings[0].worldName || "" : "",
-          currentMin: getPerPrice(currentAveragePrice, averagePrice, listings),
+          currentMin: getPerPrice(averagePrice, listings),
         },
         hq: {
           average: averagePriceHQ.toFixed(0),
