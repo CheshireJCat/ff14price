@@ -101,6 +101,8 @@ Vue.component("price-show", {
     },
     name(key) {
       switch (key) {
+        case "currentMin":
+          return "当前最低价";
         case "average":
           return "最近均价";
         case "currentAverage":
@@ -249,11 +251,11 @@ Vue.component("build4", {
             {
               count,
               price: {
-                all: { currentAverage },
+                all: { currentMin },
               },
             }
           ) => {
-            return Math.round(total + currentAverage * count);
+            return Math.round(total + currentMin * count);
           },
           0
         );
@@ -329,8 +331,8 @@ Vue.component("price-list-by-name", {
                 currentAverage,
                 max,
                 min,
-                listings: listings.slice(0,15),
-                history: listings.slice(0,15),
+                listings: listings.slice(0, 15),
+                history: listings.slice(0, 15),
               };
             }
           );
@@ -500,6 +502,26 @@ function init() {
   });
 }
 
+function getPerPrice(currentAverage = 0, average = 0, listings = []) {
+  let res = currentAverage || average;
+  let min = res * 0.2;
+  // 平均价的五分之一作为底线
+  if (listings.length && min > 0) {
+    for (let index = 0; index < 5; index++) {
+      const item = listings[index];
+      if (item) {
+        if (item.pricePerUnit > min) {
+          res = item.pricePerUnit;
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+  return res.toFixed(0);
+}
+
 // 获取价格
 function getPrice(itemId, dc = "LuXingNiao", info) {
   if (!itemId) return null;
@@ -529,6 +551,7 @@ function getPrice(itemId, dc = "LuXingNiao", info) {
           max: maxPrice,
           min: minPrice,
           worldName: listings.length ? listings[0].worldName || "" : "",
+          currentMin: getPerPrice(currentAveragePrice, averagePrice, listings),
         },
         hq: {
           average: averagePriceHQ.toFixed(0),
