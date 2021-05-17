@@ -49,13 +49,13 @@ a:visited {
   background-color: #4b4b4b;
   color: #fff;
 }
-.el-table--enable-row-hover .el-table__body tr:hover>td{
+.el-table--enable-row-hover .el-table__body tr:hover > td {
   background-color: #666;
 }
-.el-table tr:hover a{
+.el-table tr:hover a {
   color: #000;
 }
-.el-table__expand-icon{
+.el-table__expand-icon {
   color: #fff;
 }
 
@@ -80,6 +80,17 @@ a:visited {
 }
 .dcm {
   background-color: #eee;
+}
+
+.el-icon-star-on,
+.el-icon-star-off {
+  font-size: 24px;
+  vertical-align: sub;
+  position: relative;
+  top: -1px;
+}
+.el-icon-star-on {
+  color: #fed45d;
 }
 
 .tag {

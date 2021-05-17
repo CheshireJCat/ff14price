@@ -172,7 +172,7 @@ Vue.component("build4_table", {
       </el-table-column>
       <el-table-column label="职业" prop="proName"> </el-table-column>
       <el-table-column label="名称" prop="name"> </el-table-column>
-      <el-table-column label="最低成本价" prop="cost"> </el-table-column>
+      <el-table-column label="最低成本价" align="right" prop="cost"> </el-table-column>
     </el-table>
   `,
 });
@@ -304,7 +304,7 @@ Vue.component("build4", {
 });
 
 Vue.component("price-list-by-name", {
-  props: ["names", "dc", "host"],
+  props: ["names", "dc", "host","tags"],
   data() {
     return {
       loading: false,
@@ -359,21 +359,27 @@ Vue.component("price-list-by-name", {
           this.loading = false;
         });
     },
+    addTag(name) {
+      this.$emit("add-tag", name);
+    },
+    removeTag(name) {
+      this.$emit("remove-tag", name);
+    },
   },
   template: `
     <el-container v-loading="loading">
       <i class="el-icon-refresh refresh" @click="search"></i>
       <el-table :data="data" style="width: 100%">
-      <el-table-column type="expand">
-        <template slot-scope="props">
-          <price-table
-            :data="props.row.listings"
-            time-text="上报时间"
-            name-text="雇员名"
-            :dc="dc"
-          />
-        </template>
-      </el-table-column>
+        <el-table-column type="expand">
+          <template slot-scope="props">
+            <price-table
+              :data="props.row.listings"
+              time-text="上报时间"
+              name-text="雇员名"
+              :dc="dc"
+            />
+          </template>
+        </el-table-column>
         <el-table-column label="名称">
           <template slot-scope="scope">
             <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
@@ -393,6 +399,22 @@ Vue.component("price-list-by-name", {
             <span>{{ scope.row.currentMin | fmtCoin }}</span>
           </template>
         </el-table-column>
+        <el-table-column label="收藏" align="center">
+          <template slot-scope="scope">
+            <span
+              v-if="!tags.includes(scope.row.Name)"
+              class="search-res-star"
+              v-on:click="addTag(scope.row.Name)"
+              ><i class="el-icon-star-off"></i> 收藏</span
+            >
+            <span
+              v-else
+              class="search-res-star"
+              v-on:click="removeTag(scope.row.Name)"
+              ><i class="el-icon-star-on"></i> 已收藏</span
+            >
+          </template>
+        </el-table-column>
       </el-table>
     </el-container>
   `,
@@ -408,9 +430,8 @@ function init() {
         activeIndex: "seachPrice",
         host: apiHost,
         dcs,
-        tags,
+        tags: [],
         dc: "LuXingNiao",
-        favIds: [],
         // 搜索
         searchResult: [],
         searchItemName: "",
@@ -430,6 +451,7 @@ function init() {
     },
     mounted() {
       document.getElementById("app").style.display = "block";
+      this.tags = this.getLocalTags();
     },
     methods: {
       handleDcChange(dc) {
@@ -470,8 +492,40 @@ function init() {
         });
       },
       addTag(name) {
-        if (!this.tags.includes(name)) {
-          this.tags.push(name);
+        console.log(name)
+        if (this.tags.length <= 30) {
+          if (!this.tags.includes(name)) {
+            this.tags.push(name);
+          }
+          Vue.nextTick(() => {
+            this.setLocalTags(this.tags);
+          });
+        }
+      },
+      removeTag(tag) {
+        if (this.tags.length == 1) {
+          this.tags = ["G12"];
+        } else {
+          this.tags.splice(this.tags.indexOf(tag), 1);
+        }
+        Vue.nextTick(() => {
+          this.setLocalTags(this.tags);
+        });
+      },
+      getLocalTags() {
+        if (window.localStorage) {
+          let res = window.localStorage.getItem("ff14price-tags");
+          if (res) {
+            return res.split(",");
+          } else {
+            return tags;
+          }
+        }
+        return tags;
+      },
+      setLocalTags(data = []) {
+        if (window.localStorage) {
+          return window.localStorage.setItem("ff14price-tags", data.join(","));
         }
       },
       searchPrice({ ID = 0, Url = "", Icon = "", Name = "" }) {
@@ -481,9 +535,6 @@ function init() {
           name: Name,
           url: Url,
         };
-        if (Name) {
-          this.addTag(Name);
-        }
         this.getItemPrice(ID);
       },
       getItemPrice(id) {
@@ -497,16 +548,6 @@ function init() {
             this.searchPriceRes = res;
             this.loading_searchPrice = false;
           });
-      },
-      collectItem(id) {
-        id = parseInt(id);
-        if (isNaN(id) || id == 0) return;
-        let index = this.favIds.indexOf(id);
-        if (index < 0) {
-          this.favIds.push(id);
-        } else {
-          this.favIds.splice(index, 1);
-        }
       },
     },
   });
