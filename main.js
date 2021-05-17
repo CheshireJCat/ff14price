@@ -36,7 +36,7 @@ const price_default = {
   max: 0,
   min: 0,
   worldName: "",
-  currentMin: 0
+  currentMin: 0,
 };
 
 const searchPriceRes_default = {
@@ -50,7 +50,7 @@ const searchPriceRes_default = {
 };
 
 Vue.component("price-table", {
-  props: ["data", "time-text", "dc", "name-text","lazy"],
+  props: ["data", "time-text", "dc", "name-text", "lazy"],
   filters: {
     fmtCoin,
   },
@@ -340,7 +340,7 @@ Vue.component("price-list-by-name", {
           this.data = res.map(
             ({
               info: { ID, Name, Icon, Url },
-              all: { average, currentAverage, max, min },
+              all: { average, currentMin },
               listings,
               history,
             }) => {
@@ -350,9 +350,7 @@ Vue.component("price-list-by-name", {
                 Icon,
                 Url,
                 average,
-                currentAverage,
-                max,
-                min,
+                currentMin,
                 listings: listings.slice(0, 15),
                 history: listings.slice(0, 15),
               };
@@ -390,19 +388,9 @@ Vue.component("price-list-by-name", {
             <span>{{ scope.row.average | fmtCoin }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="currentAverage" label="数据均价" align="center">
+        <el-table-column prop="currentMin" label="最低价" align="center">
           <template slot-scope="scope">
-            <span>{{ scope.row.currentAverage | fmtCoin }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="max" label="最高价" align="center">
-          <template slot-scope="scope">
-            <span>{{ scope.row.max | fmtCoin }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="min" label="最低价" align="center">
-          <template slot-scope="scope">
-            <span>{{ scope.row.min | fmtCoin }}</span>
+            <span>{{ scope.row.currentMin | fmtCoin }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -569,21 +557,16 @@ function getPrice(itemId, dc = "LuXingNiao", info) {
         info,
         all: {
           average: averagePrice.toFixed(0),
-          currentAverage: currentAveragePrice.toFixed(0),
-          max: maxPrice,
-          min: minPrice,
-          worldName: listings.length ? listings[0].worldName || "" : "",
           currentMin: getPerPrice(averagePrice, listings),
+          worldName: listings.length ? listings[0].worldName || "" : "",
         },
         hq: {
           average: averagePriceHQ.toFixed(0),
-          currentAverage: currentAveragePriceHQ.toFixed(0),
           max: maxPriceHQ,
           min: minPriceHQ,
         },
         nq: {
           average: averagePriceNQ.toFixed(0),
-          currentAverage: currentAveragePriceNQ.toFixed(0),
           max: maxPriceNQ,
           min: minPriceNQ,
         },

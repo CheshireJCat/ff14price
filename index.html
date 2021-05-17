@@ -92,17 +92,17 @@
               </div>
               <!-- 价格统计 -->
               <el-row :gutter="20" v-if="searchPriceRes.all.average > 0">
-                <el-col :xs="{span:24}" :md="{span:8}">
+                <el-col :xs="{span:24}" :md="{span: searchPriceRes.hq.average != 0 ? 8 : 12}">
                   <price-show
                     :dc="dc"
                     :data="searchPriceRes.all"
                     title="ALL"
                   ></price-show>
                 </el-col>
-                <el-col :xs="{span:24}" :md="{span:8}">
+                <el-col :xs="{span:24}" :md="{span: searchPriceRes.hq.average != 0 ? 8 : 12}">
                   <price-show :data="searchPriceRes.nq" title="NQ"></price-show
                 ></el-col>
-                <el-col :xs="{span:24}" :md="{span:8}">
+                <el-col v-if="searchPriceRes.hq.average != 0" :xs="{span:24}" :md="{span:8}">
                   <price-show :data="searchPriceRes.hq" title="HQ"></price-show>
                 </el-col>
               </el-row>
