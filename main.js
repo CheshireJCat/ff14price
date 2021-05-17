@@ -136,14 +136,6 @@ Vue.component("build4_table", {
           <el-table :data="props.row.info" style="width: 100%" style="background:#eee;">
             <el-table-column type="expand">
               <template slot-scope="props">
-                <el-container style="background: #777777; padding: 5px 8px;">购买记录</el-container>
-                <price-table
-                  :data="props.row.price.history.slice(0,10)"
-                  time-text="购买时间"
-                  name-text="玩家名"
-                  :dc="dc"
-                  :lazy="true"
-                ></price-table>
                 <el-container style="background: #777777; padding: 5px 8px;">交易板价格</el-container>
                 <price-table
                   :data="props.row.price.listings.slice(0,10)"
@@ -153,6 +145,14 @@ Vue.component("build4_table", {
                   :lazy="true"
                 >
                 </price-table>
+                <el-container style="background: #777777; padding: 5px 8px;">购买记录</el-container>
+                <price-table
+                  :data="props.row.price.history.slice(0,10)"
+                  time-text="购买时间"
+                  name-text="玩家名"
+                  :dc="dc"
+                  :lazy="true"
+                ></price-table>
               </template>
             </el-table-column>
             <el-table-column label="材料名" prop="name"> </el-table-column>
