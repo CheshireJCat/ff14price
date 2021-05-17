@@ -145,6 +145,9 @@
           <el-tab-pane label="四期重建奖励" name="rebuild4Reward" :lazy="true">
             <price-list-by-name :names="rebuild4Reward" :dc="dc" :host="host" />
           </el-tab-pane>
+          <el-tab-pane label="往期重建" name="rebuildedReward" :lazy="true">
+            <price-list-by-name :names="rebuildedReward" :dc="dc" :host="host" />
+          </el-tab-pane>
           <el-tab-pane label="常用染剂" name="Dye" :lazy="true">
             <price-list-by-name :names="Dyes" :dc="dc" :host="host" />
           </el-tab-pane>
@@ -169,7 +172,7 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
     <script src="config.build4.js?v=2"></script>
-    <script src="config.names.js?v=2"></script>
+    <script src="config.names.js?v=3"></script>
     <script src="main.js?v=5"></script>
   </body>
 </html>
