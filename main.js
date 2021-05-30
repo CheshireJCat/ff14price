@@ -1,6 +1,8 @@
 const apiHost = "https://cafemaker.wakingsands.com";
 const wikiUrl = "https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:";
 
+const Event = new Vue();
+
 const dcs = {
   LuXingNiao: "陆行鸟跨服",
   HongYuHai: "红玉海",
@@ -36,6 +38,7 @@ const price_default = {
   max: 0,
   min: 0,
   worldName: "",
+  currentMin: 0,
 };
 
 const searchPriceRes_default = {
@@ -49,12 +52,12 @@ const searchPriceRes_default = {
 };
 
 Vue.component("price-table", {
-  props: ["data", "time-text", "dc", "name-text"],
+  props: ["data", "time-text", "dc", "name-text", "lazy"],
   filters: {
     fmtCoin,
   },
   template: `
-    <el-table :data="data" style="width: 100%">
+    <el-table :data="data" style="width: 100%" :lazy="lazy || false">
       <el-table-column label="HQ" width="30px">
         <template slot-scope="scope">
           <span>{{ scope.row.hq ? "√" : "" }}</span>
@@ -101,6 +104,8 @@ Vue.component("price-show", {
     },
     name(key) {
       switch (key) {
+        case "currentMin":
+          return "当前最低价";
         case "average":
           return "最近均价";
         case "currentAverage":
@@ -112,6 +117,12 @@ Vue.component("price-show", {
         case "worldName":
           return "最低价服务器";
       }
+    },
+    addTag(name) {
+      Event.$emit("addTag", name);
+    },
+    removeTag(name) {
+      Event.$emit("removeTag", name);
     },
   },
   template: `
@@ -125,7 +136,15 @@ Vue.component("price-show", {
   `,
 });
 Vue.component("build4_table", {
-  props: ["data", "dc"],
+  props: ["data", "dc", "tags"],
+  methods: {
+    addTag(name) {
+      Event.$emit("addTag", name);
+    },
+    removeTag(name) {
+      Event.$emit("removeTag", name);
+    },
+  },
   template: `
     <el-table :data="data" style="width: 100%">
       <el-table-column type="expand">
@@ -133,24 +152,42 @@ Vue.component("build4_table", {
           <el-table :data="props.row.info" style="width: 100%" style="background:#eee;">
             <el-table-column type="expand">
               <template slot-scope="props">
-                <el-container style="background: #777777; padding: 5px 8px;">购买记录</el-container>
-                <price-table
-                  :data="props.row.price.history.slice(0,10)"
-                  time-text="购买时间"
-                  name-text="玩家名"
-                  :dc="dc"
-                ></price-table>
                 <el-container style="background: #777777; padding: 5px 8px;">交易板价格</el-container>
                 <price-table
                   :data="props.row.price.listings.slice(0,10)"
                   time-text="上报时间"
                   name-text="雇员名"
                   :dc="dc"
+                  :lazy="true"
                 >
                 </price-table>
+                <el-container style="background: #777777; padding: 5px 8px;">购买记录</el-container>
+                <price-table
+                  :data="props.row.price.history.slice(0,10)"
+                  time-text="购买时间"
+                  name-text="玩家名"
+                  :dc="dc"
+                  :lazy="true"
+                ></price-table>
               </template>
             </el-table-column>
             <el-table-column label="材料名" prop="name"> </el-table-column>
+            <el-table-column label="收藏" align="center">
+              <template slot-scope="scope">
+                <span
+                  v-if="!tags.includes(scope.row.name)"
+                  class="search-res-star"
+                  v-on:click="addTag(scope.row.name)"
+                  ><i class="el-icon-star-off"></i> 收藏</span
+                >
+                <span
+                  v-else
+                  class="search-res-star"
+                  v-on:click="removeTag(scope.row.name)"
+                  ><i class="el-icon-star-on"></i> 已收藏</span
+                >
+              </template>
+            </el-table-column>
             <el-table-column label="需要数量" prop="count">
             </el-table-column>
             <el-table-column prop="price" label="价格">
@@ -167,7 +204,8 @@ Vue.component("build4_table", {
       </el-table-column>
       <el-table-column label="职业" prop="proName"> </el-table-column>
       <el-table-column label="名称" prop="name"> </el-table-column>
-      <el-table-column label="最低成本价" prop="cost"> </el-table-column>
+      <el-table-column label="最低成本价" align="right" prop="cost"> </el-table-column>
+      
     </el-table>
   `,
 });
@@ -177,7 +215,7 @@ Vue.component("build4_table", {
 // config_build4_hash_name_id
 // config_build4
 Vue.component("build4", {
-  props: ["dc"],
+  props: ["dc", "tags"],
   data() {
     return {
       loading: false,
@@ -196,14 +234,14 @@ Vue.component("build4", {
   },
   template: `
     <el-row :gutter="20" v-loading="loading">
-      <el-col :xs="{span:24,offset:0}" :md="{span:24}">根据当前数据[currentAverage]字段计算</el-col>
+      <el-col :xs="{span:24,offset:0}" :md="{span:24}">根据当前数据[交易板最低价格]计算</el-col>
       <el-col :xs="{span:24,offset:0}" :md="{span:12}">
         <el-header style="line-height:60px">高难</el-header>
-        <build4_table :dc="dc" :data="dataHard"></build4_table>
+        <build4_table :dc="dc" :data="dataHard" :tags="tags"></build4_table>
       </el-col>
       <el-col :xs="{span:24,offset:0}" :md="{span:12}">
         <el-header style="line-height:60px">80级</el-header>
-        <build4_table :dc="dc" :data="dataNormal"></build4_table>
+        <build4_table :dc="dc" :data="dataNormal" :tags="tags"></build4_table>
       </el-col>
     </el-row>
   `,
@@ -268,11 +306,11 @@ Vue.component("build4", {
             {
               count,
               price: {
-                all: { currentAverage },
+                all: { currentMin },
               },
             }
           ) => {
-            return Math.round(total + currentAverage * count);
+            return Math.round(total + currentMin * count);
           },
           0
         );
@@ -299,7 +337,7 @@ Vue.component("build4", {
 });
 
 Vue.component("price-list-by-name", {
-  props: ["names", "dc", "host"],
+  props: ["names", "dc", "host", "tags"],
   data() {
     return {
       loading: false,
@@ -335,7 +373,7 @@ Vue.component("price-list-by-name", {
           this.data = res.map(
             ({
               info: { ID, Name, Icon, Url },
-              all: { average, currentAverage, max, min },
+              all: { average, currentMin },
               listings,
               history,
             }) => {
@@ -345,32 +383,36 @@ Vue.component("price-list-by-name", {
                 Icon,
                 Url,
                 average,
-                currentAverage,
-                max,
-                min,
-                listings: listings.slice(0,15),
-                history: listings.slice(0,15),
+                currentMin,
+                listings: listings.slice(0, 15),
+                history: listings.slice(0, 15),
               };
             }
           );
           this.loading = false;
         });
     },
+    addTag(name) {
+      Event.$emit("addTag", name);
+    },
+    removeTag(name) {
+      Event.$emit("removeTag", name);
+    },
   },
   template: `
     <el-container v-loading="loading">
       <i class="el-icon-refresh refresh" @click="search"></i>
       <el-table :data="data" style="width: 100%">
-      <el-table-column type="expand">
-        <template slot-scope="props">
-          <price-table
-            :data="props.row.listings"
-            time-text="上报时间"
-            name-text="雇员名"
-            :dc="dc"
-          />
-        </template>
-      </el-table-column>
+        <el-table-column type="expand">
+          <template slot-scope="props">
+            <price-table
+              :data="props.row.listings"
+              time-text="上报时间"
+              name-text="雇员名"
+              :dc="dc"
+            />
+          </template>
+        </el-table-column>
         <el-table-column label="名称">
           <template slot-scope="scope">
             <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
@@ -385,19 +427,25 @@ Vue.component("price-list-by-name", {
             <span>{{ scope.row.average | fmtCoin }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="currentAverage" label="数据均价" align="center">
+        <el-table-column prop="currentMin" label="最低价" align="center">
           <template slot-scope="scope">
-            <span>{{ scope.row.currentAverage | fmtCoin }}</span>
+            <span>{{ scope.row.currentMin | fmtCoin }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="max" label="最高价" align="center">
+        <el-table-column label="收藏" align="center">
           <template slot-scope="scope">
-            <span>{{ scope.row.max | fmtCoin }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="min" label="最低价" align="center">
-          <template slot-scope="scope">
-            <span>{{ scope.row.min | fmtCoin }}</span>
+            <span
+              v-if="!tags.includes(scope.row.Name)"
+              class="search-res-star"
+              v-on:click="addTag(scope.row.Name)"
+              ><i class="el-icon-star-off"></i> 收藏</span
+            >
+            <span
+              v-else
+              class="search-res-star"
+              v-on:click="removeTag(scope.row.Name)"
+              ><i class="el-icon-star-on"></i> 已收藏</span
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -415,9 +463,8 @@ function init() {
         activeIndex: "seachPrice",
         host: apiHost,
         dcs,
-        tags,
+        tags: [],
         dc: "LuXingNiao",
-        favIds: [],
         // 搜索
         searchResult: [],
         searchItemName: "",
@@ -437,6 +484,21 @@ function init() {
     },
     mounted() {
       document.getElementById("app").style.display = "block";
+      this.tags = this.getLocalTags();
+      Event.$on("addTag", (name) => {
+        this.addTag(name);
+      });
+      Event.$on("removeTag", (name) => {
+        this.removeTag(name);
+      });
+    },
+    unmounted() {
+      Event.$off("addTag", (name) => {
+        this.addTag(name);
+      });
+      Event.$off("removeTag", (name) => {
+        this.removeTag(name);
+      });
     },
     methods: {
       handleDcChange(dc) {
@@ -477,8 +539,40 @@ function init() {
         });
       },
       addTag(name) {
-        if (!this.tags.includes(name)) {
-          this.tags.push(name);
+        console.log(name);
+        if (this.tags.length <= 30) {
+          if (!this.tags.includes(name)) {
+            this.tags.push(name);
+          }
+          Vue.nextTick(() => {
+            this.setLocalTags(this.tags);
+          });
+        }
+      },
+      removeTag(tag) {
+        if (this.tags.length == 1) {
+          this.tags = ["G12"];
+        } else {
+          this.tags.splice(this.tags.indexOf(tag), 1);
+        }
+        Vue.nextTick(() => {
+          this.setLocalTags(this.tags);
+        });
+      },
+      getLocalTags() {
+        if (window.localStorage) {
+          let res = window.localStorage.getItem("ff14price-tags");
+          if (res) {
+            return res.split(",");
+          } else {
+            return tags;
+          }
+        }
+        return tags;
+      },
+      setLocalTags(data = []) {
+        if (window.localStorage) {
+          return window.localStorage.setItem("ff14price-tags", data.join(","));
         }
       },
       searchPrice({ ID = 0, Url = "", Icon = "", Name = "" }) {
@@ -488,9 +582,6 @@ function init() {
           name: Name,
           url: Url,
         };
-        if (Name) {
-          this.addTag(Name);
-        }
         this.getItemPrice(ID);
       },
       getItemPrice(id) {
@@ -505,18 +596,28 @@ function init() {
             this.loading_searchPrice = false;
           });
       },
-      collectItem(id) {
-        id = parseInt(id);
-        if (isNaN(id) || id == 0) return;
-        let index = this.favIds.indexOf(id);
-        if (index < 0) {
-          this.favIds.push(id);
-        } else {
-          this.favIds.splice(index, 1);
-        }
-      },
     },
   });
+}
+
+function getPerPrice(average = 0, listings = []) {
+  let res = average;
+  let min = res * 0.2;
+  // 平均价的五分之一作为底线
+  if (listings.length && min > 0) {
+    for (let index = 0; index < 5; index++) {
+      const item = listings[index];
+      if (item) {
+        if (item.pricePerUnit > min) {
+          res = item.pricePerUnit;
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+  return res.toFixed(0);
 }
 
 // 获取价格
@@ -544,20 +645,16 @@ function getPrice(itemId, dc = "LuXingNiao", info) {
         info,
         all: {
           average: averagePrice.toFixed(0),
-          currentAverage: currentAveragePrice.toFixed(0),
-          max: maxPrice,
-          min: minPrice,
+          currentMin: getPerPrice(averagePrice, listings),
           worldName: listings.length ? listings[0].worldName || "" : "",
         },
         hq: {
           average: averagePriceHQ.toFixed(0),
-          currentAverage: currentAveragePriceHQ.toFixed(0),
           max: maxPriceHQ,
           min: minPriceHQ,
         },
         nq: {
           average: averagePriceNQ.toFixed(0),
-          currentAverage: currentAveragePriceNQ.toFixed(0),
           max: maxPriceNQ,
           min: minPriceNQ,
         },
