@@ -632,8 +632,18 @@ function searchNames(names, dc) {
   return Promise.all(
     names.map((name) => {
       return searchItemByName(name).then((res) => {
-        if (res.length == 1 && res[0]) {
-          return getPrice(res[0].ID, dc, res[0]);
+        if (res.length > 0) {
+          if(res.length === 1){
+            return getPrice(res[0].ID, dc, res[0]);
+          }else{
+            for (let index = 0; index < res.length; index++) {
+              const item = res[index];
+              if(item.Name == name){
+                return getPrice(item.ID, dc, item);
+              }
+            }
+            return Object.assign({}, searchPriceRes_default);
+          }
         } else {
           return Object.assign({}, searchPriceRes_default);
         }
