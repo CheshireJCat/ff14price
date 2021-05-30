@@ -385,7 +385,7 @@ Vue.component("price-list-by-name", {
                 average,
                 currentMin,
                 listings: listings.slice(0, 15),
-                history: listings.slice(0, 15),
+                history: history.slice(0, 15),
               };
             }
           );
@@ -730,13 +730,13 @@ function searchNames(names, dc) {
     names.map((name) => {
       return searchItemByName(name).then((res) => {
         if (res.length > 0) {
-          if(res.length === 1){
+          if(res.length == 1){
             return getPrice(res[0].ID, dc, res[0]);
           }else{
             for (let index = 0; index < res.length; index++) {
-              const item = res[index];
+              let item = res[index];
               if(item.Name == name){
-                return getPrice(item.ID, dc, item);
+                return getPrice(res[index].ID, dc, res[index]);
               }
             }
             return Object.assign({}, searchPriceRes_default);
