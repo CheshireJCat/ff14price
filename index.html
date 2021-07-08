@@ -177,6 +177,9 @@
               :tags="tags"
             />
           </el-tab-pane>
+          <el-tab-pane label="点数材料" name="dianshucailiao" :lazy="true">
+            <price-list-by-name :names="['轻银矿','奇人研磨剂','袋狮的粗皮','马尾草','栀子','灵魂精华']" :dc="dc" :host="host" :tags="tags" />
+          </el-tab-pane>
         </el-tabs>
       </el-main>
       <el-footer class="footer">
