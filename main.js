@@ -490,6 +490,7 @@ function init() {
         host: apiHost,
         dcs,
         tags: [],
+        historyTags: ["发型样式：黎明辫"],
         dc: "LuXingNiao",
         // 搜索
         searchResult: [],
@@ -585,6 +586,16 @@ function init() {
           this.setLocalTags(this.tags);
         });
       },
+      addHistoryTag(name) {
+        if (!this.historyTags.includes(name)) {
+          this.historyTags.push(name);
+        }
+      },
+      removeHistoryTag(tag) {
+        if (this.historyTags.length > 0) {
+          this.historyTags.splice(this.historyTags.indexOf(tag), 1);
+        }
+      },
       getLocalTags() {
         if (window.localStorage) {
           let res = window.localStorage.getItem("ff14price-tags");
@@ -602,6 +613,8 @@ function init() {
         }
       },
       searchPrice({ ID = 0, Url = "", Icon = "", Name = "" }) {
+        console.log('搜索：',Name)
+        Name && this.addHistoryTag(Name);
         this.searchPriceItem = {
           id: ID,
           icon: Icon,
