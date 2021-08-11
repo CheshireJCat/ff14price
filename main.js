@@ -490,7 +490,7 @@ function init() {
         host: apiHost,
         dcs,
         tags: [],
-        historyTags: ["发型样式：黎明辫","发型样式：2B","发型样式：9s","前沿布料"],
+        historyTags: ["发型样式：黎明辫","发型样式：2B","发型样式：9S","前沿布料"],
         dc: "LuXingNiao",
         // 搜索
         searchResult: [],
