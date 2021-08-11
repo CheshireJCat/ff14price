@@ -343,9 +343,9 @@ Vue.component("build4", {
       }
     },
     getItemsPrice(callback) {
-      return Promise.all(
+      return PromiseLimit(
         config_build4_item.map(({ ID }) => {
-          return getPrice(ID, this.dc);
+          return () => getPrice(ID, this.dc);
         })
       )
         .catch(() => {
@@ -752,9 +752,9 @@ function searchItemByName(name) {
 }
 
 function searchNames(names, dc) {
-  return Promise.all(
+  return PromiseLimit(
     names.map((name) => {
-      return searchItemByName(name).then((res) => {
+      return () => searchItemByName(name).then((res) => {
         if (res.length > 0) {
           if(res.length == 1){
             return getPrice(res[0].ID, dc, res[0]);
@@ -855,3 +855,42 @@ function fmtCoin(value) {
 //   });
 //   JSON.stringify(config_build4)
 // }
+
+
+function PromiseAsync(fns){
+  let i = 0,length = fns.length;
+  const ret = [];
+  function walk(){
+    if(i === length){
+      return Promise.resolve(ret);
+    }
+    const item = fns[i];
+    i++;
+    return item().then((res)=>{
+      ret.push(res);
+      return walk();
+    })
+  }
+  return walk();
+}
+
+function PromiseLimit(funcArray, limit = 3) {
+  let i = 0;
+  const result = [];
+  const running = [];
+  const queue = function() {
+    if (i === funcArray.length) return Promise.all(running);
+    const p = funcArray[i++]();
+    result.push(p);
+    const e = p.then(() => running.splice(running.indexOf(e), 1));
+    running.push(e);
+    if (running.length >= limit) {
+      return Promise.race(running).then(
+        () => queue(),
+        e => Promise.reject(e)
+      );
+    }
+    return Promise.resolve().then(() => queue());
+  };
+  return queue().then(() => Promise.all(result));
+}
