@@ -1,204 +1,129 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FF14价格收藏</title>
-    <link
-      href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/theme-chalk/index.min.css"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="main.css?v=3" />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF14价格收藏</title>
+  <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/theme-chalk/index.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="main.css?v=4" />
+</head>
 
-  <body>
-    <el-container class="app" id="app" style="display: none">
-      <el-header class="header">FF14价格速查</el-header>
-      <el-main class="main">
-        <!-- 选择区服 -->
-        <el-select
-          class="select-dc"
-          v-model="dc"
-          placeholder="请选择区服"
-          @change="handleDcChange"
-        >
-          <el-option
-            v-for="(value,key) in dcs"
-            :key="key"
-            :label="value"
-            :value="key"
-            :class="['LuXingNiao','MaoXiaoPang','MoGuLi'].includes(key) ? 'dcm': ''"
-          >
-          </el-option> </el-select
-        ><!-- 选择区服 end -->
-        <el-tabs v-model="activeIndex" @tab-click="handleTabChange">
-          <!-- 价格查询 -->
-          <el-tab-pane label="价格查询" name="seachPrice">
-            <el-container>
-              <!-- 搜索物品 -->
-              <el-autocomplete
-                class="search-input"
-                ref="searchInput"
-                v-model="searchItemName"
-                :fetch-suggestions="searchItem"
-                placeholder="请输入物品名称"
-              >
-                <i class="el-icon-search el-input__icon" slot="suffix"> </i>
-                <template slot-scope="{ item }">
-                  <div class="search-res-item" v-on:click="searchPrice(item)">
-                    <el-image
-                      class="search-res-image"
-                      style="height: 100%"
-                      :src="host + item.Icon"
-                    ></el-image
-                    ><span class="search-res-info"> {{ item.Name }} </span>
-                  </div>
-                </template>
-              </el-autocomplete>
-            </el-container>
-            <!-- tags -->
-            <el-main v-loading="loading_searchPrice">
-              <el-tag
-                class="tag"
-                :key="index"
-                v-for="(item, index) in tags"
-                closable
-                @close="removeTag(item)"
-                @click="searchTag(item)"
-                >{{item}}</el-tag
-              >
-              <el-tooltip
-                content="收藏功能仅支持可以保留本地缓存的浏览器，qq,微信等内置浏览器可能不支持，且清除浏览器缓存时可能清空已收藏标签"
-                placement="bottom"
-              >
-                <i class="el-icon-question"></i>
-              </el-tooltip>
-              <div
-                class="search-res-item"
-                style="justify-content: flex-start; margin: 20px 0"
-                v-if="searchPriceItem.id"
-              >
-                <el-image
-                  :src="host + searchPriceItem.icon"
-                  style="vertical-align: middle"
-                >
-                </el-image>
-                <a :href="wikiUrl + searchPriceItem.name" target="_blank">
-                  <span class="search-res-info">
-                    {{ searchPriceItem.name }}
-                  </span>
-                </a>
-                <span
-                  v-if="!tags.includes(searchPriceItem.name)"
-                  class="search-res-star"
-                  v-on:click.stop="addTag(searchPriceItem.name)"
-                  ><i class="el-icon-star-off"></i> 收藏</span
-                >
-                <span
-                  v-else
-                  class="search-res-star"
-                  v-on:click.stop="removeTag(searchPriceItem.name)"
-                  ><i class="el-icon-star-on"></i> 已收藏</span
-                >
-              </div>
-              <!-- 价格统计 -->
-              <el-row :gutter="20" v-if="searchPriceRes.all.average > 0">
-                <el-col
-                  :xs="{span:24}"
-                  :md="{span: searchPriceRes.hq.average != 0 ? 8 : 12}"
-                >
-                  <price-show
-                    :dc="dc"
-                    :data="searchPriceRes.all"
-                    title="ALL"
-                  ></price-show>
-                </el-col>
-                <el-col
-                  :xs="{span:24}"
-                  :md="{span: searchPriceRes.hq.average != 0 ? 8 : 12}"
-                >
-                  <price-show :data="searchPriceRes.nq" title="NQ"></price-show
-                ></el-col>
-                <el-col
-                  v-if="searchPriceRes.hq.average != 0"
-                  :xs="{span:24}"
-                  :md="{span:8}"
-                >
-                  <price-show :data="searchPriceRes.hq" title="HQ"></price-show>
-                </el-col>
-              </el-row>
-            </el-main>
-            <!-- 价格列表 -->
-            <template v-if="searchPriceItem && searchPriceItem.id">
-              <el-row :gutter="20" v-loading="loading_searchPrice">
-                <el-col :xs="{span:24,offset:0}" :md="{span:12}">
-                  <div class="grid-content bg-purple">
-                    <el-container>购买记录</el-container>
-                    <price-table
-                      :data="searchPriceRes.history"
-                      time-text="购买时间"
-                      name-text="玩家名"
-                      :dc="dc"
-                    ></price-table>
-                  </div>
-                </el-col>
-                <el-col :xs="{span:24,offset:0}" :md="{span:12}">
-                  <div class="grid-content bg-purple">
-                    <el-container>交易板价格</el-container>
-                    <price-table
-                      :data="searchPriceRes.listings"
-                      time-text="上报时间"
-                      name-text="雇员名"
-                      :dc="dc"
-                    >
-                    </price-table>
-                  </div>
-                </el-col>
-              </el-row>
-            </template>
-            <!-- 价格列表 end -->
-          </el-tab-pane>
-          <!-- 价格查询 end -->
-          <el-tab-pane label="四期重建成本" name="rebuild4" :lazy="true">
-            <build4 :dc="dc" :tags="tags"> </build4>
-          </el-tab-pane>
-          <!-- 常用查询 -->
-          <el-tab-pane
-            v-for="(item, index) in tabTags"
-            :key="index"
-            :label="item.name"
-            :lazy="true"
-          >
-            <price-list-by-name
-              :names="item.data"
-              :dc="dc"
-              :host="host"
-              :tags="tags"
-            />
-          </el-tab-pane>
-          <el-tab-pane label="点数材料" name="dianshucailiao" :lazy="true">
-            <price-list-by-name :names="['轻银矿','奇人研磨剂','袋狮的粗皮','马尾草','栀子','灵魂精华']" :dc="dc" :host="host" :tags="tags" />
-          </el-tab-pane>
-        </el-tabs>
-      </el-main>
-      <el-footer class="footer">
-        v1.0
-        <el-link type="primary" href="https://github.com/CheshireJCat/ff14price"
-          >GitHub</el-link
-        >
-        <el-link type="primary" href="https://universalis.app/"
-          >Universalis.app</el-link
-        >
-        <el-link type="primary" href="https://cafemaker.wakingsands.com"
-          >CafeMaker
-        </el-link>
-      </el-footer>
-    </el-container>
-    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
-    <script src="config.build4.js?v=2"></script>
-    <script src="config.names.js?v=4"></script>
-    <script src="main.js?v=9"></script>
-  </body>
+<body>
+  <el-container class="app" id="app" style="display: none">
+    <el-header class="header">FF14价格速查</el-header>
+    <el-main class="main">
+      <!-- 选择区服 -->
+      <el-select class="select-dc" v-model="dc" placeholder="请选择区服" @change="handleDcChange">
+        <el-option v-for="(value,key) in dcs" :key="key" :label="value" :value="key"
+          :class="['LuXingNiao','MaoXiaoPang','MoGuLi'].includes(key) ? 'dcm': ''">
+        </el-option>
+      </el-select><!-- 选择区服 end -->
+      <el-tabs v-model="activeIndex" @tab-click="handleTabChange">
+        <!-- 价格查询 -->
+        <el-tab-pane label="价格查询" name="seachPrice">
+          <el-container>
+            <!-- 搜索物品 -->
+            <el-autocomplete class="search-input" ref="searchInput" v-model="searchItemName"
+              :fetch-suggestions="searchItem" placeholder="请输入物品名称">
+              <i class="el-icon-search el-input__icon" slot="suffix"> </i>
+              <template slot-scope="{ item }">
+                <div class="search-res-item" v-on:click="searchPrice(item)">
+                  <el-image class="search-res-image" style="height: 100%" :src="host + item.Icon"></el-image><span
+                    class="search-res-info"> {{ item.Name }} </span>
+                </div>
+              </template>
+            </el-autocomplete>
+          </el-container>
+          <!-- tags -->
+          <div v-loading="loading_searchPrice">
+            <el-row :gutter="20">
+              <el-col :xs="{span:24}" :md="{span: 12}">
+                <header class="tag-header">搜索历史</header>
+                <el-tag class="tag" :key="index" v-for="(item, index) in historyTags" closable @close="removeHistoryTag(item)"
+                  @click="searchTag(item)">{{item}}</el-tag>
+                </el-tooltip>
+              </el-col>
+              <el-col :xs="{span:24}" :md="{span: 12}">
+                <header class="tag-header">收藏列表</header>
+                <el-tag class="tag" :key="index" v-for="(item, index) in tags" closable @close="removeTag(item)"
+                  @click="searchTag(item)">{{item}}</el-tag>
+                <el-tooltip content="收藏功能仅支持可以保留本地缓存的浏览器，qq,微信等内置浏览器可能不支持，且清除浏览器缓存时可能清空已收藏标签" placement="bottom">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </el-col>
+            </el-row>
+            <div class="search-res-item" style="justify-content: flex-start; margin: 20px 0" v-if="searchPriceItem.id">
+              <el-image :src="host + searchPriceItem.icon" style="vertical-align: middle">
+              </el-image>
+              <a :href="wikiUrl + searchPriceItem.name" target="_blank">
+                <span class="search-res-info">
+                  {{ searchPriceItem.name }}
+                </span>
+              </a>
+              <span v-if="!tags.includes(searchPriceItem.name)" class="search-res-star"
+                v-on:click.stop="addTag(searchPriceItem.name)"><i class="el-icon-star-off"></i> 收藏</span>
+              <span v-else class="search-res-star" v-on:click.stop="removeTag(searchPriceItem.name)"><i
+                  class="el-icon-star-on"></i> 已收藏</span>
+            </div>
+            <!-- 价格统计 -->
+            <el-row :gutter="20" v-if="searchPriceRes.all.average > 0">
+              <el-col :xs="{span:24}" :md="{span: searchPriceRes.hq.average != 0 ? 8 : 12}">
+                <price-show :dc="dc" :data="searchPriceRes.all" title="ALL"></price-show>
+              </el-col>
+              <el-col :xs="{span:24}" :md="{span: searchPriceRes.hq.average != 0 ? 8 : 12}">
+                <price-show :data="searchPriceRes.nq" title="NQ"></price-show>
+              </el-col>
+              <el-col v-if="searchPriceRes.hq.average != 0" :xs="{span:24}" :md="{span:8}">
+                <price-show :data="searchPriceRes.hq" title="HQ"></price-show>
+              </el-col>
+            </el-row>
+          </div>
+          <!-- 价格列表 -->
+          <template v-if="searchPriceItem && searchPriceItem.id">
+            <el-row :gutter="20" v-loading="loading_searchPrice">
+              <el-col :xs="{span:24,offset:0}" :md="{span:12}">
+                <div class="grid-content bg-purple">
+                  <el-container>购买记录</el-container>
+                  <price-table :data="searchPriceRes.history" time-text="购买时间" name-text="玩家名" :dc="dc"></price-table>
+                </div>
+              </el-col>
+              <el-col :xs="{span:24,offset:0}" :md="{span:12}">
+                <div class="grid-content bg-purple">
+                  <el-container>交易板价格</el-container>
+                  <price-table :data="searchPriceRes.listings" time-text="上报时间" name-text="雇员名" :dc="dc">
+                  </price-table>
+                </div>
+              </el-col>
+            </el-row>
+          </template>
+          <!-- 价格列表 end -->
+        </el-tab-pane>
+        <!-- 价格查询 end -->
+        <el-tab-pane label="四期重建成本" name="rebuild4" :lazy="true">
+          <build4 :dc="dc" :tags="tags"> </build4>
+        </el-tab-pane>
+        <!-- 常用查询 -->
+        <el-tab-pane v-for="(item, index) in tabTags" :key="index" :label="item.name" :lazy="true">
+          <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" />
+        </el-tab-pane>
+        <el-tab-pane label="点数材料" name="dianshucailiao" :lazy="true">
+          <price-list-by-name :names="['轻银矿','奇人研磨剂','袋狮的粗皮','马尾草','栀子','灵魂精华']" :dc="dc" :host="host" :tags="tags" />
+        </el-tab-pane>
+      </el-tabs>
+    </el-main>
+    <el-footer class="footer">
+      v1.0
+      <el-link type="primary" href="https://github.com/CheshireJCat/ff14price">GitHub</el-link>
+      <el-link type="primary" href="https://universalis.app/">Universalis.app</el-link>
+      <el-link type="primary" href="https://cafemaker.wakingsands.com">CafeMaker
+      </el-link>
+    </el-footer>
+  </el-container>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
+  <script src="config.build4.js?v=2"></script>
+  <script src="config.names.js?v=5"></script>
+  <script src="main.js?v=10"></script>
+</body>
 </html>
