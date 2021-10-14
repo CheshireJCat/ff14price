@@ -1,10 +1,10 @@
 const apiHost = "https://cafemaker.wakingsands.com";
 const wikiUrl = "https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:";
 const listingLimit = (() => {
-  let max = 30;
+  let res = 10, max = 30;
   let query = location.search.match(/listings=(\d+)/);
-  if (query) max = query[1] >= max ? max : query[1];
-  return max;
+  if (query) res = query[1] >= max ? max : query[1];
+  return res;
 })();
 
 const Event = new Vue();
