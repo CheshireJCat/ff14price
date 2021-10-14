@@ -67,7 +67,7 @@
                   class="el-icon-star-on"></i> 已收藏</span>
             </div>
             <!-- 价格统计 -->
-            <el-row :gutter="20" v-if="searchPriceRes.all.average > 0">
+            <el-row :gutter="20" v-if="searchPriceRes?.all.average > 0">
               <el-col :xs="{span:24}" :md="{span: searchPriceRes.hq.average != 0 ? 8 : 12}">
                 <price-show :dc="dc" :data="searchPriceRes.all" title="ALL"></price-show>
               </el-col>
@@ -85,13 +85,13 @@
               <el-col :xs="{span:24,offset:0}" :md="{span:12}">
                 <div class="grid-content bg-purple">
                   <el-container>购买记录</el-container>
-                  <price-table :data="searchPriceRes.history" time-text="购买时间" name-text="玩家名" :dc="dc"></price-table>
+                  <price-table :data="searchPriceRes?.history" time-text="购买时间" name-text="玩家名" :dc="dc"></price-table>
                 </div>
               </el-col>
               <el-col :xs="{span:24,offset:0}" :md="{span:12}">
                 <div class="grid-content bg-purple">
                   <el-container>交易板价格</el-container>
-                  <price-table :data="searchPriceRes.listings" time-text="上报时间" name-text="雇员名" :dc="dc">
+                  <price-table :data="searchPriceRes?.listings" time-text="上报时间" name-text="雇员名" :dc="dc">
                   </price-table>
                 </div>
               </el-col>
@@ -123,7 +123,7 @@
   <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
   <script src="config.build4.js?v=2"></script>
-  <script src="config.names.js?v=5"></script>
-  <script src="main.js?v=11"></script>
+  <script src="config.names.js?v=6"></script>
+  <script src="main.js?v=12"></script>
 </body>
 </html>

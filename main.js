@@ -1,5 +1,11 @@
 const apiHost = "https://cafemaker.wakingsands.com";
 const wikiUrl = "https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:";
+const listingLimit = (() => {
+  let max = 30;
+  let query = location.search.match(/listings=(\d+)/);
+  if (query) max = query[1] >= max ? max : query[1];
+  return max;
+})();
 
 const Event = new Vue();
 
@@ -275,7 +281,7 @@ Vue.component("build4", {
     search() {
       this.loading = true;
       // 获取所有价格
-      this.getItemsPrice(() => {
+      this.getItemsPricesByIds(() => {
         let data = config_build4.map(({ proName, normal, hard }) => {
           let res = {
             proName,
@@ -342,6 +348,22 @@ Vue.component("build4", {
         );
       }
     },
+    getItemsPricesByIds(callback) {
+      return getPrice(
+        config_build4_item.map(({ ID }) => ID),
+        this.dc
+      )
+        .catch(() => {
+          this.loading = true;
+        })
+        .then((res) => {
+          res.forEach((priceItem) => {
+            let { ID } = priceItem;
+            config_build4_hash_id_item[ID].price = priceItem;
+          });
+          callback();
+        });
+    },
     getItemsPrice(callback) {
       return PromiseLimit(
         config_build4_item.map(({ ID }) => {
@@ -400,8 +422,8 @@ Vue.component("price-list-by-name", {
             ({
               info: { ID, Name, Icon, Url },
               all: { average, currentMin },
-              listings,
-              history,
+              listings = [],
+              history = [],
             }) => {
               return {
                 ID,
@@ -490,7 +512,12 @@ function init() {
         host: apiHost,
         dcs,
         tags: [],
-        historyTags: ["发型样式：黎明辫","发型样式：2B","发型样式：9S","前沿布料"],
+        historyTags: [
+          "发型样式：黎明辫",
+          "发型样式：2B",
+          "发型样式：9S",
+          "前沿布料",
+        ],
         dc: "LuXingNiao",
         // 搜索
         searchResult: [],
@@ -566,7 +593,6 @@ function init() {
         });
       },
       addTag(name) {
-        console.log(name);
         if (this.tags.length <= 30) {
           if (!this.tags.includes(name)) {
             this.tags.push(name);
@@ -613,7 +639,7 @@ function init() {
         }
       },
       searchPrice({ ID = 0, Url = "", Icon = "", Name = "" }) {
-        console.log('搜索：',Name)
+        console.log("搜索：", Name);
         Name && this.addHistoryTag(Name);
         this.searchPriceItem = {
           id: ID,
@@ -627,7 +653,7 @@ function init() {
         this.loading_searchPrice = true;
         getPrice(id, this.dc)
           .catch(() => {
-            this.searchPriceRes = searchPriceRes_default;
+            this.searchPriceRes = Object.assign({},searchPriceRes_default);
             this.loading_searchPrice = false;
           })
           .then((res) => {
@@ -660,132 +686,225 @@ function getPerPrice(average = 0, listings = []) {
 }
 
 // 获取价格
-function getPrice(itemId, dc = "LuXingNiao", info) {
-  if (!itemId) return null;
-  return fetchGet(`https://universalis.app/api/${dc}/${itemId}`).then(
-    ({
-      averagePrice = 0,
-      averagePriceHQ = 0,
-      averagePriceNQ = 0,
-      currentAveragePrice = 0,
-      currentAveragePriceHQ = 0,
-      currentAveragePriceNQ = 0,
-      maxPrice = 0,
-      maxPriceHQ = 0,
-      maxPriceNQ = 0,
-      minPrice = 0,
-      minPriceHQ = 0,
-      minPriceNQ = 0,
-      listings = [],
-      recentHistory = [],
-    }) => {
-      return {
-        ID: itemId,
-        info,
-        all: {
-          average: averagePrice.toFixed(0),
-          currentMin: getPerPrice(averagePrice, listings),
-          worldName: listings.length ? listings[0].worldName || "" : "",
-        },
-        hq: {
-          average: averagePriceHQ.toFixed(0),
-          max: maxPriceHQ,
-          min: minPriceHQ,
-        },
-        nq: {
-          average: averagePriceNQ.toFixed(0),
-          max: maxPriceNQ,
-          min: minPriceNQ,
-        },
-        listings: listings.map(
-          ({
-            hq,
-            lastReviewTime,
-            pricePerUnit,
-            quantity,
-            retainerName,
-            total,
-            worldName,
-          }) => {
-            return {
-              hq,
-              pricePerUnit,
-              timestamp: fmtTime(lastReviewTime),
-              quantity,
-              total,
-              username: retainerName,
-              worldName,
-            };
-          }
-        ),
-        history: recentHistory.map(
-          ({
-            buyerName,
-            hq,
-            pricePerUnit,
-            quantity,
-            timestamp,
-            total,
-            worldName,
-          }) => {
-            return {
-              hq,
-              pricePerUnit,
-              timestamp: fmtTime(timestamp),
-              quantity,
-              total,
-              username: buyerName,
-              worldName,
-            };
-          }
-        ),
-      };
+function getPrice(itemIds, dc = "LuXingNiao", info) {
+  if (!itemIds) return null;
+  if (itemIds.length > 1) itemIds = itemIds.join(",");
+  return fetchGet(
+    `https://universalis.app/api/v2/${dc}/${itemIds}?listings=${listingLimit}`
+  ).then((result) => {
+    if (!result.itemIDs) {
+      let res = formatPriceRes(result, info);
+      return res;
     }
-  );
-}
-
-// 通过名称搜索物品
-function searchItemByName(name) {
-  if (!name) return null;
-  let url = apiHost + "/search";
-  let params = {
-    indexes: "Item",
-    filters: "ItemSearchCategory.ID>=1",
-    string: name,
-    columns: "ID,Icon,Name,Url",
-    limit: 100,
-    sort_field: "LevelItem",
-    sort_order: "desc",
-  };
-  return fetchGet(url + "?" + cmbGetParams(params)).then(function ({
-    Results = [],
-  }) {
-    return Results;
+    let { itemIDs = [], items = {} } = result;
+    if (itemIDs.length < 1) return null;
+    let res = Object.values(items).map(formatPriceRes, info);
+    return res.length > 1 ? res : res[0];
   });
 }
 
-function searchNames(names, dc) {
-  return PromiseLimit(
-    names.map((name) => {
-      return () => searchItemByName(name).then((res) => {
-        if (res.length > 0) {
-          if(res.length == 1){
-            return getPrice(res[0].ID, dc, res[0]);
-          }else{
-            for (let index = 0; index < res.length; index++) {
-              let item = res[index];
-              if(item.Name == name){
-                return getPrice(res[index].ID, dc, res[index]);
-              }
-            }
-            return Object.assign({}, searchPriceRes_default);
-          }
-        } else {
-          return Object.assign({}, searchPriceRes_default);
-        }
-      });
+function formatPriceRes(
+  {
+    itemID = 0,
+    averagePrice = 0,
+    averagePriceHQ = 0,
+    averagePriceNQ = 0,
+    currentAveragePrice = 0,
+    currentAveragePriceHQ = 0,
+    currentAveragePriceNQ = 0,
+    maxPrice = 0,
+    maxPriceHQ = 0,
+    maxPriceNQ = 0,
+    minPrice = 0,
+    minPriceHQ = 0,
+    minPriceNQ = 0,
+    listings = [],
+    recentHistory = [],
+  },
+  info
+) {
+  return {
+    ID: itemID,
+    info,
+    all: {
+      average: averagePrice.toFixed(0),
+      currentMin: getPerPrice(averagePrice, listings),
+      worldName: listings.length ? listings[0].worldName || "" : "",
+    },
+    hq: {
+      average: averagePriceHQ.toFixed(0),
+      max: maxPriceHQ,
+      min: minPriceHQ,
+    },
+    nq: {
+      average: averagePriceNQ.toFixed(0),
+      max: maxPriceNQ,
+      min: minPriceNQ,
+    },
+    listings: listings.map(
+      ({
+        hq,
+        lastReviewTime,
+        pricePerUnit,
+        quantity,
+        retainerName,
+        total,
+        worldName,
+      }) => {
+        return {
+          hq,
+          pricePerUnit,
+          timestamp: fmtTime(lastReviewTime),
+          quantity,
+          total,
+          username: retainerName,
+          worldName,
+        };
+      }
+    ),
+    history: recentHistory.map(
+      ({
+        buyerName,
+        hq,
+        pricePerUnit,
+        quantity,
+        timestamp,
+        total,
+        worldName,
+      }) => {
+        return {
+          hq,
+          pricePerUnit,
+          timestamp: fmtTime(timestamp),
+          quantity,
+          total,
+          username: buyerName,
+          worldName,
+        };
+      }
+    ),
+  };
+}
+
+// 通过名称搜索物品
+// function searchItemByName(name) {
+//   if (!name) return null;
+//   let url = apiHost + "/search";
+//   let params = {
+//     indexes: "Item",
+//     filters: "ItemSearchCategory.ID>=1",
+//     string: name,
+//     columns: "ID,Icon,Name,Url",
+//     limit: 100,
+//     sort_field: "LevelItem",
+//     sort_order: "desc",
+//   };
+//   return fetchGet(url + "?" + cmbGetParams(params)).then(function ({
+//     Results = [],
+//   }) {
+//     return Results;
+//   });
+// }
+
+function searchItemByName(names, exact) {
+  if (!names) return null;
+  if (typeof names === "string") names = [names];
+  let url = apiHost + "/search";
+  return fetch(url, {
+    method: "post",
+    body: JSON.stringify({
+      indexes: "item",
+      body: {
+        query: {
+          bool: {
+            should: (() => {
+              return names.map((name) => {
+                return {
+                  match_phrase: {
+                    NameCombined_chs: name,
+                  },
+                };
+              });
+            })(),
+          },
+        },
+      },
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then(function (response) {
+      return response.json();
     })
-  );
+    .then(({ Results = [] }) => {
+      return !exact
+        ? Results
+        : Results.filter(({ Name }) => {
+            return names.includes(Name);
+          });
+    });
+}
+
+// {
+//   "query": {
+//     "bool": {
+//       "should": [
+//         {
+//           "match_phrase": {
+//             "NameCombined_chs": "樱桃粉"
+//           }
+//         },
+//         {
+//           "match_phrase": {
+//             "NameCombined_chs": "珍珠白"
+//           }
+//         }
+//       ]
+//     }
+//   }
+// }
+
+// function searchNames(names, dc) {
+//   return PromiseLimit(
+//     names.map((name) => {
+//       return () =>
+//         searchItemByName(name).then((res) => {
+//           if (res.length > 0) {
+//             if (res.length == 1) {
+//               return getPrice(res[0].ID, dc, res[0]);
+//             } else {
+//               for (let index = 0; index < res.length; index++) {
+//                 let item = res[index];
+//                 if (item.Name == name) {
+//                   return getPrice(res[index].ID, dc, res[index]);
+//                 }
+//               }
+//               return Object.assign({}, searchPriceRes_default);
+//             }
+//           } else {
+//             return Object.assign({}, searchPriceRes_default);
+//           }
+//         });
+//     })
+//   );
+// }
+
+function searchNames(names, dc) {
+  return searchItemByName(names, true).then((infos) => {
+    return getPrice(
+      infos.map(({ ID }) => ID),
+      dc
+    ).then((res) => {
+      res = res.map((item) => {
+        return {
+          ...item,
+          info: infos.filter(({ ID }) => ID === item.ID)[0],
+        };
+      });
+      return res;
+    });
+  });
 }
 
 function searchItemByIds(ids) {
@@ -869,20 +988,21 @@ function fmtCoin(value) {
 //   JSON.stringify(config_build4)
 // }
 
-
-function PromiseAsync(fns){
-  let i = 0,length = fns.length;
+function PromiseAsync(fns) {
+  let i = 0,
+    length = fns.length;
   const ret = [];
-  function walk(){
-    if(i === length){
+
+  function walk() {
+    if (i === length) {
       return Promise.resolve(ret);
     }
     const item = fns[i];
     i++;
-    return item().then((res)=>{
+    return item().then((res) => {
       ret.push(res);
       return walk();
-    })
+    });
   }
   return walk();
 }
@@ -891,7 +1011,7 @@ function PromiseLimit(funcArray, limit = 3) {
   let i = 0;
   const result = [];
   const running = [];
-  const queue = function() {
+  const queue = function () {
     if (i === funcArray.length) return Promise.all(running);
     const p = funcArray[i++]();
     result.push(p);
@@ -900,7 +1020,7 @@ function PromiseLimit(funcArray, limit = 3) {
     if (running.length >= limit) {
       return Promise.race(running).then(
         () => queue(),
-        e => Promise.reject(e)
+        (e) => Promise.reject(e)
       );
     }
     return Promise.resolve().then(() => queue());
