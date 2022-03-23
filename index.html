@@ -107,9 +107,11 @@
         <el-tab-pane v-for="(item, index) in tabTags" :key="index" :label="item.name" :lazy="true">
           <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" />
         </el-tab-pane>
+        <!--
         <el-tab-pane label="点数材料" name="dianshucailiao" :lazy="true">
           <price-list-by-name :names="['轻银矿','奇人研磨剂','袋狮的粗皮','马尾草','栀子','灵魂精华']" :dc="dc" :host="host" :tags="tags" />
         </el-tab-pane>
+        -->
       </el-tabs>
     </el-main>
     <el-footer class="footer">
@@ -123,7 +125,7 @@
   <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
   <script src="config.build4.js?v=2"></script>
-  <script src="config.names.js?v=6"></script>
-  <script src="main.js?v=13"></script>
+  <script src="config.names.js?v=7"></script>
+  <script src="main.js?v=14"></script>
 </body>
 </html>
