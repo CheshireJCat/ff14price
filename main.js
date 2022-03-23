@@ -815,6 +815,7 @@ function searchItemByName(names, exact) {
     body: JSON.stringify({
       indexes: "item",
       body: {
+        size: 50,
         query: {
           bool: {
             should: (() => {
@@ -934,12 +935,12 @@ function cmbGetParams(params) {
 }
 
 function nameAbbr(name) {
-  if (name == "G12") {
-    return "陈旧的缠尾蛟革地图";
-  } else if (name == "G10") {
-    return "陈旧的瞪羚革地图";
-  } else {
-    return name;
+  switch (name) {
+    case "G10": return "陈旧的瞪羚革地图";
+    case "G12": return "陈旧的缠尾蛟革地图";
+    case "G13": return "陈旧的高鼻羚羊革地图";
+    case "G14": return "陈旧的金毗罗鳄革地图";
+    default: return name;
   }
 }
 

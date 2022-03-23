@@ -1,6 +1,7 @@
 // 收藏列表
 const tags = [
-  "G12",
+  "G14",
+  "G13",
   "G10",
   "休闲",
   "发型样式：黎明辫",
@@ -11,15 +12,10 @@ const tabTags = [
     name: "四期重建奖励",
     data: [
       "休闲外套装备箱",
-      "库啵装备箱",
-      "触手",
       "翠绿隔离墙",
-      "春意隔离墙",
       "演技教材·吃饭团",
-      "演技教材·吃苹果",
       "演技教材·扫地",
       "大壳蟹角笛",
-      "三角龙龙",
       "田园圆点阳伞",
     ],
   },
@@ -68,8 +64,8 @@ const tabTags = [
         "雄略",
       ];
       stones = stones
-        .map((item) => item + "魔晶石捌型")
-        .concat(stones.map((item) => item + "魔晶石柒型"));
+        .map((item) => item + "魔晶石拾型")
+        .concat(stones.map((item) => item + "魔晶石玖型"));
       return stones;
     })(),
   },
