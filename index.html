@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FF14价格收藏</title>
   <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/theme-chalk/index.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="main.css?v=5" />
+  <link rel="stylesheet" href="main.css?v=6" />
 </head>
 
 <body>
@@ -37,14 +37,14 @@
           </el-container>
           <!-- tags -->
           <div v-loading="loading_searchPrice">
-            <el-row :gutter="20">
+            <!-- <el-row :gutter="20">
               <el-col :xs="{span:24}" :md="{span: 24}">
                 <header class="tag-header">富婆衣</header>
                 <el-tag class="tag" :key="index" v-for="(item, index) in richTags"
                   @click="searchTag(item)">{{item}}</el-tag>
                 </el-tooltip>
               </el-col>
-            </el-row>
+            </el-row> -->
             <el-row :gutter="20">
               <el-col :xs="{span:24}" :md="{span: 12}">
                 <header class="tag-header">搜索历史</header>
@@ -117,14 +117,14 @@
           <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" />
         </el-tab-pane>
         
-        <el-tab-pane label="富婆衣" name="richWomen" :lazy="true">
-          <el-tabs tab-position="top" class="rich-area-no">
-            <!-- 富婆衣查询 -->
+        <!-- 富婆衣查询 -->
+        <!-- <el-tab-pane label="富婆衣" name="richWomen" :lazy="true">
+          <el-tabs tab-position="left" class="rich-area-no" style="height: calc(100vh - 200px)">
             <el-tab-pane v-for="(item, index) in rich" :key="index" :label="item.name" :lazy="true" class="rich-tab">
-              <!-- <div slot="label" class="rich-tab-item">
+              <div slot="label" class="rich-tab-item">
                 <div class="rich-tab-name">{{item.name}}</div>
                 <el-image :src="item.preview" class="rich-tab-thumb mobile-hide" lazy />
-              </div> -->
+              </div>
               <h3>
                 {{item.name}}
                 <a :href="item.link" style="color: #a9b1d9;" target="_blank">
@@ -133,7 +133,30 @@
               </h3>
               <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" />
             </el-tab-pane>
-          <el-tabs></el-tabs>
+          </el-tabs>
+        </el-tab-pane> -->
+
+        <el-tab-pane label="富婆衣" name="richWomen" :lazy="true">
+          <el-container style="height: calc(100vh - 200px)">
+            <el-aside width="auto">
+              <ul>
+                <li v-for="(item, index) in rich" class="rich-tab-nav" :class="richActive == index ? 'active' : ''" @click="changeRichActive(index)">
+                  {{item.name}}
+                </li>
+              </ul>
+            </el-aside>
+            <el-main>
+              <div v-if="richActive == index" v-for="(item, index) in rich" :key="index" :lazy="true" class="rich-content">
+                <div style="margin-bottom: 16px">
+                  {{item.name}}
+                  <a :href="item.link" style="color: #a9b1d9;" target="_blank">
+                    <el-tag size="mini">wiki</el-tag>
+                  </a>
+                </div>
+                <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" />
+              </div>
+            </el-main>
+          </el-container>
         </el-tab-pane>
        
       </el-tabs>
@@ -151,6 +174,6 @@
   <script src="config.build4.js?v=2"></script>
   <script src="config.names.js?v=8"></script>
   <script src="rich.js?v=1"></script>
-  <script src="main.js?v=15"></script>
+  <script src="main.js?v=16"></script>
 </body>
 </html>

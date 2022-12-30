@@ -455,7 +455,7 @@ Vue.component("price-list-by-name", {
     },
   },
   template: `
-    <el-container v-loading="loading">
+    <el-container v-loading="loading" class="price-list-by-name-ctn">
       <i class="el-icon-refresh refresh" @click="search"></i>
       <el-table :data="data" style="width: 100%">
         <el-table-column type="expand">
@@ -541,6 +541,7 @@ function init() {
           url: "",
         },
         searchPriceRes: searchPriceRes_default,
+        richActive: 0
       };
     },
     filters: {
@@ -565,6 +566,9 @@ function init() {
       });
     },
     methods: {
+      changeRichActive(index) {
+        this.richActive = index;
+      },
       handleDcChange(dc) {
         if (this.activeIndex === "seachPrice") {
           if (this.searchPriceItem && this.searchPriceItem.id) {

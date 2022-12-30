@@ -22,6 +22,9 @@ a:visited {
   color: #c6c7c8;
   text-decoration: none;
 }
+ul {
+  padding-left: 0;
+}
 .app {
   margin: 0 auto;
 }
@@ -213,6 +216,17 @@ a:visited {
 
 }
 
-.rich-tab .el-container {
+.price-list-by-name-ctn {
   position: relative;
+}
+
+.rich-tab-nav {
+  list-style: none;
+  height: 32px;
+  line-height: 32px;
+  cursor: pointer;
+  padding: 0 12px;
+}
+.rich-tab-nav.active {
+  background-color: rgba(0, 0, 0, 0.2);
 }
