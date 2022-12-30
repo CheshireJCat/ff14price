@@ -9,7 +9,7 @@ const listingLimit = (() => {
 
 const Event = new Vue();
 
-const dcs = {
+const dc1 = {
   LuXingNiao: "陆行鸟跨服",
   HongYuHai: "红玉海",
   ShenYiZhiDi: "神意之地",
@@ -36,6 +36,8 @@ const dcs = {
   HaiMaoChaWu: "海猫茶屋",
   RouFengHaiWan: "柔风海湾",
   HuPoYuan: "琥珀园",
+};
+const dc2 = {
   陆行鸟跨服: "陆行鸟跨服",
   红玉海: "红玉海",
   神意之地: "神意之地",
@@ -62,6 +64,11 @@ const dcs = {
   海猫茶屋: "海猫茶屋",
   柔风海湾: "柔风海湾",
   琥珀园: "琥珀园",
+};
+
+const dcs = {
+  ...dc1,
+  ...dc2
 };
 
 const price_default = {
@@ -465,9 +472,12 @@ Vue.component("price-list-by-name", {
           <template slot-scope="scope">
             <el-image :src="host + scope.row.Icon" style="vertical-align: middle">
             </el-image>
-            <a :href="wikiUrl + scope.row.Name" target="_blank">
-              <span class="search-res-info"> {{ scope.row.Name }} </span>
-            </a>
+            <span class="search-res-info flex-1">
+              {{ scope.row.Name }} 
+              <a :href="wikiUrl + scope.row.Name" target="_blank">
+                <el-tag size="mini">wiki</el-tag>
+              </a>
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="average" label="均价" align="center">

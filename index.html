@@ -15,7 +15,7 @@
     <el-main class="main">
       <!-- 选择区服 -->
       <el-select class="select-dc" v-model="dc" placeholder="请选择区服" @change="handleDcChange">
-        <el-option v-for="(value,key) in dcs" :key="key" :label="value" :value="key"
+        <el-option v-for="(value,key) in dc1" :key="key" :label="value" :value="key"
           :class="['LuXingNiao','MaoXiaoPang','MoGuLi'].includes(key) ? 'dcm': ''">
         </el-option>
       </el-select><!-- 选择区服 end -->
@@ -38,6 +38,14 @@
           <!-- tags -->
           <div v-loading="loading_searchPrice">
             <el-row :gutter="20">
+              <el-col :xs="{span:24}" :md="{span: 24}">
+                <header class="tag-header">富婆衣</header>
+                <el-tag class="tag" :key="index" v-for="(item, index) in richTags"
+                  @click="searchTag(item)">{{item}}</el-tag>
+                </el-tooltip>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
               <el-col :xs="{span:24}" :md="{span: 12}">
                 <header class="tag-header">搜索历史</header>
                 <el-tag class="tag" :key="index" v-for="(item, index) in historyTags" closable @close="removeHistoryTag(item)"
@@ -56,11 +64,12 @@
             <div class="search-res-item" style="justify-content: flex-start; margin: 20px 0" v-if="searchPriceItem.id">
               <el-image :src="host + searchPriceItem.icon" style="vertical-align: middle">
               </el-image>
-              <a :href="wikiUrl + searchPriceItem.name" target="_blank">
-                <span class="search-res-info">
-                  {{ searchPriceItem.name }}
-                </span>
-              </a>
+              <span class="search-res-info">
+                {{ searchPriceItem.name }}
+                <a :href="wikiUrl + searchPriceItem.name" target="_blank">
+                  <el-tag size="mini">wiki</el-tag>
+                </a>
+              </span>
               <span v-if="!tags.includes(searchPriceItem.name)" class="search-res-star"
                 v-on:click.stop="addTag(searchPriceItem.name)"><i class="el-icon-star-off"></i> 收藏</span>
               <span v-else class="search-res-star" v-on:click.stop="removeTag(searchPriceItem.name)"><i
@@ -100,18 +109,33 @@
           <!-- 价格列表 end -->
         </el-tab-pane>
         <!-- 价格查询 end -->
-        <el-tab-pane label="四期重建成本" name="rebuild4" :lazy="true">
+        <!-- <el-tab-pane label="四期重建成本" name="rebuild4" :lazy="true">
           <build4 :dc="dc" :tags="tags"> </build4>
-        </el-tab-pane>
+        </el-tab-pane> -->
         <!-- 常用查询 -->
         <el-tab-pane v-for="(item, index) in tabTags" :key="index" :label="item.name" :lazy="true">
           <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" />
         </el-tab-pane>
-        <!--
-        <el-tab-pane label="点数材料" name="dianshucailiao" :lazy="true">
-          <price-list-by-name :names="['轻银矿','奇人研磨剂','袋狮的粗皮','马尾草','栀子','灵魂精华']" :dc="dc" :host="host" :tags="tags" />
+        
+        <el-tab-pane label="富婆衣" name="richWomen" :lazy="true">
+          <el-tabs tab-position="left" class="rich-area">
+            <!-- 富婆衣查询 -->
+            <el-tab-pane v-for="(item, index) in rich" :key="index" :label="item.name" :lazy="true" class="rich-tab">
+              <div slot="label" class="rich-tab-item">
+                <div class="rich-tab-name">{{item.name}}</div>
+                <el-image :src="item.preview" class="rich-tab-thumb" lazy />
+              </div>
+              <h3>
+                {{item.name}}
+                <a :href="item.link" style="color: #a9b1d9;" target="_blank">
+                  <el-tag size="mini">wiki</el-tag>
+                </a>
+              </h3>
+              <price-list-by-name :names="item.data" :dc="dc" :host="host" :tags="tags" />
+            </el-tab-pane>
+          <el-tabs></el-tabs>
         </el-tab-pane>
-        -->
+       
       </el-tabs>
     </el-main>
     <el-footer class="footer">
@@ -125,7 +149,8 @@
   <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/index.min.js"></script>
   <script src="config.build4.js?v=2"></script>
-  <script src="config.names.js?v=7"></script>
-  <script src="main.js?v=14"></script>
+  <script src="config.names.js?v=8"></script>
+  <script src="rich.js?v=1"></script>
+  <script src="main.js?v=15"></script>
 </body>
 </html>
