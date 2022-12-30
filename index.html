@@ -118,13 +118,13 @@
         </el-tab-pane>
         
         <el-tab-pane label="富婆衣" name="richWomen" :lazy="true">
-          <el-tabs tab-position="left" class="rich-area">
+          <el-tabs tab-position="top" class="rich-area-no">
             <!-- 富婆衣查询 -->
             <el-tab-pane v-for="(item, index) in rich" :key="index" :label="item.name" :lazy="true" class="rich-tab">
-              <div slot="label" class="rich-tab-item">
+              <!-- <div slot="label" class="rich-tab-item">
                 <div class="rich-tab-name">{{item.name}}</div>
-                <el-image :src="item.preview" class="rich-tab-thumb" lazy />
-              </div>
+                <el-image :src="item.preview" class="rich-tab-thumb mobile-hide" lazy />
+              </div> -->
               <h3>
                 {{item.name}}
                 <a :href="item.link" style="color: #a9b1d9;" target="_blank">

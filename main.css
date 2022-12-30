@@ -148,63 +148,71 @@ a:visited {
   .timestamp {
     display: block;
   }
+  .mobile-hide {
+    display: none!important;
+  }
 }
-.tag-header{
+.tag-header {
   height: 36px;
   line-height: 36px;
 }
 
-.rich-area>.el-tabs__header,
-.rich-area>.el-tabs__content {
-  height: calc(100vh - 200px)!important;
+@media (min-width: 768px) {
+  .rich-area > .el-tabs__header,
+  .rich-area > .el-tabs__content {
+    height: calc(100vh - 200px) !important;
+  }
+
+  .rich-area .el-tabs__nav-wrap {
+    padding: 0 !important;
+  }
+
+  .rich-area .el-tabs__nav-prev,
+  .rich-area .el-tabs__nav-next,
+  .rich-area .el-tabs__active-bar {
+    display: none;
+  }
+
+  .rich-area .el-tabs__nav-wrap::after {
+    display: none !important;
+  }
+
+  .rich-area .el-tabs__nav-scroll,
+  .rich-area > .el-tabs__content {
+    overflow: auto;
+  }
+
+  .rich-tab-item {
+    width: 500px;
+    text-align: center;
+  }
+
+
+  .rich-area .el-tabs__item {
+    height: 280px;
+    margin: 16px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  }
+  .rich-area .el-tabs__item.is-active {
+    background-color: #434546;
+  }
+
+  .rich-area .rich-tab-name {
+    line-height: 30px;
+  }
+
+  .rich-area .rich-tab-thumb {
+    width: 100%;
+    height: 215px;
+  }
+  .rich-area .rich-tab-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
 }
 
-.rich-area .el-tabs__nav-wrap {
-  padding: 0!important;
-}
-
-.rich-area .el-tabs__nav-prev,
-.rich-area .el-tabs__nav-next,
-.rich-area .el-tabs__active-bar {
-  display: none;
-}
-
-.rich-area .el-tabs__nav-wrap::after {
-  display: none!important;
-}
-
-.rich-area .el-tabs__nav-scroll,
-.rich-area>.el-tabs__content {
-  overflow: auto;
-}
-
-.rich-area .el-tabs__item {
-  height: 280px;
-  margin: 16px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, .2);
-}
-.rich-area .el-tabs__item.is-active {
-  background-color: #434546;
-}
 .rich-tab .el-container {
   position: relative;
-}
-
-.rich-tab-item {
-  width: 500px;
-  text-align: center;
-}
-
-.rich-tab-name {
-  line-height: 30px;
-}
-
-.rich-tab-thumb {
-  width: 100%;
-  height: 215px;
-}
-.rich-tab-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
 }
