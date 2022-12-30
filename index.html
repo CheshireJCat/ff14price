@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FF14价格收藏</title>
   <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.1/theme-chalk/index.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="main.css?v=6" />
+  <link rel="stylesheet" href="main.css?v=7" />
 </head>
 
 <body>
@@ -137,8 +137,8 @@
         </el-tab-pane> -->
 
         <el-tab-pane label="富婆衣" name="richWomen" :lazy="true">
-          <el-container style="height: calc(100vh - 200px)">
-            <el-aside width="auto">
+          <el-container style="height: calc(100vh - 200px)" class="rich-box">
+            <el-aside width="auto" class="mobile-hide">
               <ul>
                 <li v-for="(item, index) in rich" class="rich-tab-nav" :class="richActive == index ? 'active' : ''" @click="changeRichActive(index)">
                   {{item.name}}
@@ -146,8 +146,17 @@
               </ul>
             </el-aside>
             <el-main>
+              <el-select v-model="richActive" placeholder="请选择"  style="margin-bottom: 16px" class="pc-hide">
+                <el-option
+                  v-for="(item, index) in rich"
+                  :key="item.name"
+                  :label="item.name"
+                  :value="index"
+                >
+                </el-option>
+              </el-select>
               <div v-if="richActive == index" v-for="(item, index) in rich" :key="index" :lazy="true" class="rich-content">
-                <div style="margin-bottom: 16px">
+                <div style="margin-bottom: 16px" class="mobile-hide">
                   {{item.name}}
                   <a :href="item.link" style="color: #a9b1d9;" target="_blank">
                     <el-tag size="mini">wiki</el-tag>
@@ -174,6 +183,6 @@
   <script src="config.build4.js?v=2"></script>
   <script src="config.names.js?v=8"></script>
   <script src="rich.js?v=1"></script>
-  <script src="main.js?v=16"></script>
+  <script src="main.js?v=17"></script>
 </body>
 </html>

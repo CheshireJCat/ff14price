@@ -566,6 +566,9 @@ function init() {
       });
     },
     methods: {
+      selectRichActive({value}) {
+        console.log(value)
+      },
       changeRichActive(index) {
         this.richActive = index;
       },

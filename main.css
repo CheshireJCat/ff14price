@@ -154,6 +154,10 @@ ul {
   .mobile-hide {
     display: none!important;
   }
+
+  .rich-box .el-main {
+    padding: 0;
+  }
 }
 .tag-header {
   height: 36px;
@@ -161,6 +165,9 @@ ul {
 }
 
 @media (min-width: 768px) {
+  .pc-hide {
+    display: none!important;
+  }
   .rich-area > .el-tabs__header,
   .rich-area > .el-tabs__content {
     height: calc(100vh - 200px) !important;
